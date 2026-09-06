@@ -71,7 +71,7 @@ The easiest way to start the whole project — frontend, backend, and database �
 | `backend`  | 8080       | Spring Boot API                                            |
 | `db`       | 5432       | PostgreSQL, automatically initialized with `schema.sql`    |
 
-The database schema is created automatically on first startup from `schema.sql`: no manual SQL commands are needed. The tables start empty — data gets populated as you use the app (registering users, playing games).
+The database schema is created automatically on first startup from `schema.sql`, followed by `seed.sql`, which populates it with a few demo users and completed/in-progress games — so the leaderboard and completed-games list aren't empty on first launch. All seeded accounts share the password `Demo1234!` (e.g. log in as `GinoIlPro` to see an in-progress game ready to resume). This seed data only exists in this local Docker setup — the live deployment's database is separate and unaffected by it.
 
 ### Stopping the environment
 

@@ -7,14 +7,16 @@ import { GamePathComponent } from '../../shared/game-path/game-path.component';
 import { DurationPipe, movesLabel } from '../../shared/duration/duration.pipe';
 import { WikiPageLinkComponent } from '../../shared/wiki-page-link/wiki-page-link.component';
 import { withColdStartRetry } from '../../shared/http/cold-start-retry';
+import { AnimatedBackgroundComponent } from '../../shared/animated-background/animated-background.component';
 
 @Component({
   selector: 'app-completed-detail',
-  imports: [RouterLink, GamePathComponent, DurationPipe, WikiPageLinkComponent],
+  imports: [RouterLink, GamePathComponent, DurationPipe, WikiPageLinkComponent, AnimatedBackgroundComponent],
   changeDetection: ChangeDetectionStrategy.OnPush,
   styleUrl: 'completed-detail.component.scss',
   template: `
     <div class="page">
+      <app-animated-background />
       <header class="topbar">
         <a routerLink="/" class="brand"><img src="/logo-wordmark.png" alt="WikiRace"></a>
       </header>

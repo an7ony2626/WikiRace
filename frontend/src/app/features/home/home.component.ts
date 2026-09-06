@@ -39,8 +39,8 @@ const HOME_PREVIEW_SIZE = 5;
             <span class="username">{{ auth.username() }}</span>
             <button type="button" class="link-button" (click)="logout()">Esci</button>
           } @else {
-            <a routerLink="/login" class="link-button">Accedi</a>
-            <a routerLink="/register" class="link-button">Registrati</a>
+            <a routerLink="/login" class="auth-link ghost">Accedi</a>
+            <a routerLink="/register" class="auth-link solid">Registrati</a>
           }
         </div>
       </header>

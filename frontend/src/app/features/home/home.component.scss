@@ -45,6 +45,39 @@
   }
 }
 
+.auth-link {
+  display: inline-flex;
+  align-items: center;
+  padding: 8px 18px;
+  border-radius: 999px;
+  font-size: 14px;
+  font-weight: 600;
+  text-decoration: none;
+  transition: background 0.15s ease, color 0.15s ease, border-color 0.15s ease;
+
+  &.ghost {
+    color: var(--ink);
+    border: 1px solid var(--line);
+    background: transparent;
+
+    &:hover {
+      border-color: var(--wiki-blue);
+      color: var(--wiki-blue);
+    }
+  }
+
+  &.solid {
+    color: #fff;
+    background: var(--wiki-blue);
+    border: 1px solid var(--wiki-blue);
+
+    &:hover {
+      background: var(--wiki-blue-dark);
+      border-color: var(--wiki-blue-dark);
+    }
+  }
+}
+
 .content {
   max-width: var(--max-width);
   margin: 0 auto;
@@ -152,9 +185,14 @@ h1 {
 }
 
 .rank-badge {
-  font-size: 13px;
-  color: var(--ink-soft);
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--wiki-blue);
   font-family: var(--font-mono);
+  background: rgba(51, 102, 204, 0.1);
+  padding: 4px 12px;
+  border-radius: 999px;
+  white-space: nowrap;
 }
 
 .sort-bar {

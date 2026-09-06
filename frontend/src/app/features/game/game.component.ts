@@ -31,7 +31,7 @@ import { withRequestTimeout } from '../../shared/rxjs/with-request-timeout';
           <span class="timer mono">{{ elapsedLabel() }}</span>
           <span class="steps mono">{{ movesLabel(game()?.moves ?? 0) }}</span>
           <button type="button" class="link-button" (click)="goHome()">Esci</button>
-          <button type="button" class="link-button" (click)="abandon()">Arrenditi</button>
+          <button type="button" class="link-button danger" (click)="abandon()">Arrenditi</button>
         </div>
       </header>
 

@@ -6,16 +6,18 @@ import { CompletedGameSummary, GAME_FILTER_OPTIONS, GameFilterMode } from '../..
 import { DurationPipe } from '../../shared/duration/duration.pipe';
 import { WikiPageLinkComponent } from '../../shared/wiki-page-link/wiki-page-link.component';
 import { withColdStartRetry } from '../../shared/http/cold-start-retry';
+import { AnimatedBackgroundComponent } from '../../shared/animated-background/animated-background.component';
 
 const PAGE_SIZE = 10;
 
 @Component({
   selector: 'app-completed-list',
-  imports: [RouterLink, DurationPipe, WikiPageLinkComponent],
+  imports: [RouterLink, DurationPipe, WikiPageLinkComponent, AnimatedBackgroundComponent],
   changeDetection: ChangeDetectionStrategy.OnPush,
   styleUrl: './completed-list.component.scss',
   template: `
     <div class="page">
+      <app-animated-background />
       <header class="topbar">
         <a routerLink="/" class="brand-link"><img src="/logo-wordmark.png" alt="WikiRace"></a>
         <span class="brand">Partite concluse</span>

@@ -9,6 +9,8 @@
   padding: 16px 28px;
   border-bottom: 1px solid var(--line);
   background: var(--paper-raised);
+  position: relative;
+  z-index: 1;
 }
 
 .brand {
@@ -39,6 +41,8 @@
   max-width: var(--max-width);
   margin: 0 auto;
   padding: 40px 24px 64px;
+  position: relative;
+  z-index: 1;
 }
 
 .panel-title {
@@ -50,9 +54,14 @@
 }
 
 .rank-badge {
-  font-size: 13px;
-  color: var(--ink-soft);
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--wiki-blue);
   font-family: var(--font-mono);
+  background: rgba(51, 102, 204, 0.1);
+  padding: 4px 12px;
+  border-radius: 999px;
+  white-space: nowrap;
 }
 
 .toggle-switch {

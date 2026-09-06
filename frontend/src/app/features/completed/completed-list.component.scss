@@ -9,6 +9,8 @@
   padding: 16px 28px;
   border-bottom: 1px solid var(--line);
   background: var(--paper-raised);
+  position: relative;
+  z-index: 1;
 }
 
 .brand {
@@ -39,6 +41,8 @@
   max-width: var(--max-width);
   margin: 0 auto;
   padding: 40px 24px 64px;
+  position: relative;
+  z-index: 1;
 }
 
 .filter-bar {

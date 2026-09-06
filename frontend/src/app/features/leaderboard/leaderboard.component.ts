@@ -4,16 +4,18 @@ import { AuthService } from '../../core/services/auth.service';
 import { GameService } from '../../core/services/game.service';
 import { GAME_FILTER_OPTIONS, GameFilterMode, LeaderboardEntry, LeaderboardSortMode } from '../../core/models/game.model';
 import { withRequestTimeout } from '../../shared/rxjs/with-request-timeout';
+import { AnimatedBackgroundComponent } from '../../shared/animated-background/animated-background.component';
 
 const PAGE_SIZE = 10;
 
 @Component({
   selector: 'app-leaderboard',
-  imports: [RouterLink],
+  imports: [RouterLink, AnimatedBackgroundComponent],
   changeDetection: ChangeDetectionStrategy.OnPush,
   styleUrl: './leaderboard.component.scss',
   template: `
     <div class="page">
+      <app-animated-background />
       <header class="topbar">
         <a routerLink="/" class="brand-link"><img src="/logo-wordmark.png" alt="WikiRace"></a>
         <span class="brand">Classifica</span>

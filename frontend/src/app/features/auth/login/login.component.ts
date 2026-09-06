@@ -3,14 +3,16 @@ import { ReactiveFormsModule, FormBuilder, Validators } from '@angular/forms';
 import { Router, RouterLink } from '@angular/router';
 import { AuthService } from '../../../core/services/auth.service';
 import { PasswordFieldComponent } from '../../../shared/password-field/password-field.component';
+import { AnimatedBackgroundComponent } from '../../../shared/animated-background/animated-background.component';
 
 @Component({
   selector: 'app-login',
-  imports: [ReactiveFormsModule, RouterLink, PasswordFieldComponent],
+  imports: [ReactiveFormsModule, RouterLink, PasswordFieldComponent, AnimatedBackgroundComponent],
   changeDetection: ChangeDetectionStrategy.OnPush,
   styleUrl: 'login.component.scss',
   template: `
     <div class="auth-screen">
+      <app-animated-background />
       <div class="auth-card">
         <img class="brand-logo" src="/logo-wordmark.png" alt="WikiRace">
 

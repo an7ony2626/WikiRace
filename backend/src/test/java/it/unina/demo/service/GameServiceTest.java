@@ -10,6 +10,8 @@ import it.unina.demo.entity.Game;
 import it.unina.demo.entity.GameStatus;
 import it.unina.demo.entity.GameStep;
 import it.unina.demo.entity.User;
+import it.unina.demo.exception.BadRequestException;
+import it.unina.demo.exception.ForbiddenException;
 import it.unina.demo.repository.GameRepository;
 import it.unina.demo.repository.GameStepRepository;
 import it.unina.demo.repository.UserRepository;
@@ -22,6 +24,9 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageImpl;
+import org.springframework.data.domain.Pageable;
 import static org.mockito.Mockito.lenient;
 
 import java.time.LocalDateTime;
@@ -32,6 +37,8 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.ArgumentMatchers.isNull;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
@@ -111,7 +118,7 @@ class GameServiceTest {
     }
 
     @Test
-    void followLink_clickedTitleNotOnCurrentPage_throwsIllegalArgument() {
+    void followLink_clickedTitleNotOnCurrentPage_throwsBadRequest() {
         Game game = inProgressGame();
         GameStep firstStep = stepOf(game, 1, "Napoli");
 
@@ -120,14 +127,14 @@ class GameServiceTest {
         when(wikiContentService.getPageContent("Napoli"))
                 .thenReturn(new PageContent("Napoli", "...", List.of("Campania")));
 
-        assertThrows(IllegalArgumentException.class,
+        assertThrows(BadRequestException.class,
                 () -> gameService.followLink(42L, new FollowLinkRequest("Unina")));
 
         verify(gameStepRepo, never()).save(any(GameStep.class));
     }
 
     @Test
-    void followLink_gameOwnedByAnotherUser_throwsSecurityException() {
+    void followLink_gameOwnedByAnotherUser_throwsForbidden() {
         User otherUser = User.builder().id(2L).username("bob").email("b@x.com")
                 .passwordHash("h").createdAt(LocalDateTime.now()).build();
 
@@ -143,7 +150,7 @@ class GameServiceTest {
 
         when(gameRepo.findById(42L)).thenReturn(Optional.of(game));
 
-        assertThrows(SecurityException.class,
+        assertThrows(ForbiddenException.class,
                 () -> gameService.followLink(42L, new FollowLinkRequest("Unina")));
     }
 
@@ -161,8 +168,9 @@ class GameServiceTest {
     @Test
     void getLeaderboard_mapsRepositoryRowsToResponses() {
         Object[] row = {1L, "alice", 3L, 5};
-        when(gameRepo.findLeaderboardByBestMoves(GameStatus.COMPLETED, null, null))
-                .thenReturn(List.<Object[]>of(row));
+        Page<Object[]> page = new PageImpl<>(List.<Object[]>of(row));
+        when(gameRepo.findLeaderboardPageByBestMoves(eq(GameStatus.COMPLETED), isNull(), isNull(), any(Pageable.class)))
+                .thenReturn(page);
 
         LeaderboardPageResponse leaderboard =
                 gameService.getLeaderboard(null, null, LeaderboardSortMode.BEST_MOVES, 0, 10);
@@ -218,6 +226,7 @@ class GameServiceTest {
                 .status(GameStatus.IN_PROGRESS)
                 .startedAt(LocalDateTime.now())
                 .numSteps(1)
+                .activeSeconds(0L)
                 .build();
     }
 

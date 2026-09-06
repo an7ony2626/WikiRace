@@ -5,6 +5,9 @@ import org.jsoup.Jsoup;
 import org.jsoup.nodes.Document;
 import org.jsoup.nodes.Element;
 import org.jsoup.select.Elements;
+import org.owasp.html.PolicyFactory;
+import org.owasp.html.Sanitizers;
+import org.springframework.cache.annotation.Cacheable;
 import org.springframework.stereotype.Service;
 import org.springframework.web.client.RestClient;
 import tools.jackson.databind.JsonNode;
@@ -33,9 +36,24 @@ import java.util.Comparator;
 @RequiredArgsConstructor
 public class MediaWikiContentService implements WikiContentService {
 
+    // Wikipedia's HTML is stripped of the obviously non-content noise
+    // above (stripNonContentElements), but that's a denylist, not a
+    // security boundary — a vandalized or malicious page could still
+    // carry event-handler attributes or other executable markup, which
+    // then gets rendered via [innerHTML] on the frontend. This allowlist
+    // policy is the actual XSS boundary: only known-safe formatting,
+    // block, table, link, and image markup survives.
+    private static final PolicyFactory WIKI_HTML_POLICY = Sanitizers.FORMATTING
+            .and(Sanitizers.BLOCKS)
+            .and(Sanitizers.TABLES)
+            .and(Sanitizers.LINKS)
+            .and(Sanitizers.IMAGES)
+            .and(Sanitizers.STYLES);
+
     private final RestClient wikipediaRestClient;
 
     @Override
+    @Cacheable(value = "wikiPageContent", key = "#title")
     public PageContent getPageContent(String title) {
         JsonNode response = wikipediaRestClient.get()
                 .uri(uriBuilder -> uriBuilder
@@ -62,7 +80,9 @@ public class MediaWikiContentService implements WikiContentService {
         Set<String> linkTitles = extractMainspaceLinkTitles(document);
         rewriteImageSources(document);
 
-        return new PageContent(resolvedTitle, document.body().html(), new ArrayList<>(linkTitles));
+        String sanitizedHtml = WIKI_HTML_POLICY.sanitize(document.body().html());
+
+        return new PageContent(resolvedTitle, sanitizedHtml, new ArrayList<>(linkTitles));
     }
 
     @Override

@@ -10,6 +10,7 @@ import it.unina.demo.dto.response.CompletedGamesPageResponse;
 import it.unina.demo.dto.response.GameStateResponse;
 import it.unina.demo.dto.response.LeaderboardPageResponse;
 import it.unina.demo.entity.GameStatus;
+import it.unina.demo.exception.BadRequestException;
 import it.unina.demo.service.GameService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
@@ -80,7 +81,7 @@ public class GameController {
             @Valid @RequestBody UpdateGameStatusRequest request
     ) {
         if (request.status() != GameStatus.ABANDONED)
-            throw new IllegalArgumentException("Only transitioning a game to ABANDONED is supported");
+            throw new BadRequestException("Only transitioning a game to ABANDONED is supported");
 
         gameService.abandonGame(id);
         return gameService.getGameState(id);
@@ -109,7 +110,7 @@ public class GameController {
     }
 
     @PostMapping
-    public ResponseEntity<GameStateResponse> createGame(@RequestBody CreateGameRequest request) {
+    public ResponseEntity<GameStateResponse> createGame(@Valid @RequestBody CreateGameRequest request) {
         GameStateResponse game = gameService.createGame(request);
         return ResponseEntity.created(URI.create("/api/games/" + game.gameId())).body(game);
     }

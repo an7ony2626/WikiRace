@@ -2,8 +2,9 @@ package it.unina.demo.service;
 
 import it.unina.demo.dto.request.LoginRequest;
 import it.unina.demo.dto.request.RegisterRequest;
-import it.unina.demo.dto.response.AuthResponse;
 import it.unina.demo.entity.User;
+import it.unina.demo.exception.BadRequestException;
+import it.unina.demo.exception.UnauthorizedException;
 import it.unina.demo.repository.UserRepository;
 import it.unina.demo.service.utilityservice.JwtService;
 import it.unina.demo.util.StringConstants;
@@ -23,12 +24,12 @@ public class AuthService {
     private final JwtService jwtService;
 
     @Transactional
-    public AuthResponse register(RegisterRequest request) {
+    public AuthResult register(RegisterRequest request) {
         if (userRepo.existsByUsername(request.username()))
-            throw new IllegalArgumentException(StringConstants.USERNAME_TAKEN_MESSAGE);
+            throw new BadRequestException(StringConstants.USERNAME_TAKEN_MESSAGE);
 
         if (userRepo.existsByEmail(request.email()))
-            throw new IllegalArgumentException(StringConstants.EMAIL_TAKEN_MESSAGE);
+            throw new BadRequestException(StringConstants.EMAIL_TAKEN_MESSAGE);
 
         User user = User.builder()
                 .username(request.username())
@@ -39,16 +40,16 @@ public class AuthService {
 
         userRepo.save(user);
 
-        return new AuthResponse(jwtService.generateToken(user));
+        return new AuthResult(jwtService.generateToken(user), user.getUsername());
     }
 
-    public AuthResponse login(LoginRequest request) {
+    public AuthResult login(LoginRequest request) {
         User user = userRepo.findByUsername(request.username())
-                .orElseThrow(() -> new SecurityException(StringConstants.INVALID_CREDENTIALS_MESSAGE));
+                .orElseThrow(() -> new UnauthorizedException(StringConstants.INVALID_CREDENTIALS_MESSAGE));
 
         if (!encoder.matches(request.rawPassword(), user.getPasswordHash()))
-            throw new SecurityException(StringConstants.INVALID_CREDENTIALS_MESSAGE);
+            throw new UnauthorizedException(StringConstants.INVALID_CREDENTIALS_MESSAGE);
 
-        return new AuthResponse(jwtService.generateToken(user));
+        return new AuthResult(jwtService.generateToken(user), user.getUsername());
     }
 }

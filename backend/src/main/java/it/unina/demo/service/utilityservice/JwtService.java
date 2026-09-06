@@ -10,6 +10,7 @@ import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.stereotype.Service;
 
 import javax.crypto.SecretKey;
+import java.time.Duration;
 import java.util.Date;
 import java.util.function.Function;
 
@@ -19,13 +20,19 @@ public class JwtService {
     @Value("${JWT_KEY}")
     private String key;
 
-    private static final long EXPIRATION_TIME = 1000L * 60 * 60 * 12; // 12 hours
+    // Name of the httpOnly cookie the frontend's JWT is carried in.
+    public static final String COOKIE_NAME = "wikirace_jwt";
+
+    // Single source of truth for token lifetime — AuthController's
+    // cookie Max-Age must match this, or the cookie could outlive (or
+    // expire before) the token it carries.
+    public static final Duration TOKEN_TTL = Duration.ofHours(12);
 
     public String generateToken(User user) {
         return Jwts.builder()
                 .subject(user.getUsername())
                 .issuedAt(new Date(System.currentTimeMillis()))
-                .expiration(new Date(System.currentTimeMillis() + EXPIRATION_TIME))
+                .expiration(new Date(System.currentTimeMillis() + TOKEN_TTL.toMillis()))
                 .signWith(getSignInKey())
                 .compact();
     }

@@ -12,6 +12,8 @@ export interface RegisterRequest {
   rawPassword: string;
 }
 
+// The JWT itself never appears here — the backend sets it as an
+// httpOnly cookie, so client-side JS never has read access to it.
 export interface AuthResponse {
-  token: string;
+  username: string;
 }

@@ -10,7 +10,10 @@ import it.unina.demo.dto.response.GameStateResponse;
 import it.unina.demo.dto.response.GameStepResponse;
 import it.unina.demo.dto.response.LeaderboardEntryResponse;
 import it.unina.demo.dto.response.LeaderboardPageResponse;
+import it.unina.demo.exception.BadRequestException;
+import it.unina.demo.exception.ConflictException;
 import it.unina.demo.exception.DuplicateGameException;
+import it.unina.demo.exception.ForbiddenException;
 import it.unina.demo.entity.Game;
 import it.unina.demo.entity.GameStatus;
 import it.unina.demo.entity.GameStep;
@@ -26,6 +29,7 @@ import jakarta.persistence.EntityNotFoundException;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import java.time.Duration;
@@ -52,13 +56,13 @@ public class GameService {
 
         List<Game> existing = gameRepo.findByUserIdAndStatus(user.getId(), GameStatus.IN_PROGRESS);
         if (!existing.isEmpty())
-            throw new IllegalStateException("You already have a game in progress");
+            throw new ConflictException("You already have a game in progress");
 
         String requestedStart = blankToNull(request.startPageTitle());
         String requestedTarget = blankToNull(request.targetPageTitle());
 
         if (requestedStart != null && requestedTarget != null && requestedStart.equalsIgnoreCase(requestedTarget))
-            throw new IllegalArgumentException("Start and target page must be different");
+            throw new BadRequestException("Start and target page must be different");
 
         boolean startIsRandom = requestedStart == null || Boolean.TRUE.equals(request.startWasRandom());
         boolean targetIsRandom = requestedTarget == null || Boolean.TRUE.equals(request.targetWasRandom());
@@ -73,7 +77,7 @@ public class GameService {
                 : pickRandomStartDistinctFrom(targetTitle);
 
         if (startTitle.equals(targetTitle))
-            throw new IllegalStateException("Could not pick two distinct pages, try again");
+            throw new ConflictException("Could not pick two distinct pages, try again");
 
         handleDuplicateCompletedGame(user, startTitle, targetTitle, Boolean.TRUE.equals(request.confirmReplaceExisting()));
 
@@ -149,7 +153,7 @@ public class GameService {
         PageContent currentPage = wikiContentService.getPageContent(currentTitle);
 
         if (!currentPage.linkTitles().contains(request.clickedTitle()))
-            throw new IllegalArgumentException(
+            throw new BadRequestException(
                     "'" + request.clickedTitle() + "' is not a link on the current page");
 
         PageContent nextPage = wikiContentService.getPageContent(request.clickedTitle());
@@ -235,11 +239,13 @@ public class GameService {
     public LeaderboardPageResponse getLeaderboard(
             Boolean isRandom, String requiredTargetTitle, LeaderboardSortMode sortMode, int page, int size
     ) {
-        List<Object[]> rows = sortMode == LeaderboardSortMode.GAMES_PLAYED
-                ? gameRepo.findLeaderboardByGamesPlayed(GameStatus.COMPLETED, isRandom, requiredTargetTitle)
-                : gameRepo.findLeaderboardByBestMoves(GameStatus.COMPLETED, isRandom, requiredTargetTitle);
+        Pageable pageable = PageRequest.of(page, size);
 
-        List<LeaderboardEntryResponse> entries = rows.stream()
+        Page<Object[]> resultPage = sortMode == LeaderboardSortMode.GAMES_PLAYED
+                ? gameRepo.findLeaderboardPageByGamesPlayed(GameStatus.COMPLETED, isRandom, requiredTargetTitle, pageable)
+                : gameRepo.findLeaderboardPageByBestMoves(GameStatus.COMPLETED, isRandom, requiredTargetTitle, pageable);
+
+        List<LeaderboardEntryResponse> entries = resultPage.getContent().stream()
                 .map(row -> new LeaderboardEntryResponse(
                         (Long) row[0],
                         (String) row[1],
@@ -248,21 +254,27 @@ public class GameService {
                 ))
                 .toList();
 
-        int from = Math.min(page * size, entries.size());
-        int to = Math.min(from + size, entries.size());
-
-        return new LeaderboardPageResponse(entries.subList(from, to), to < entries.size(), findRank(entries));
+        return new LeaderboardPageResponse(
+                entries, resultPage.hasNext(), findRank(sortMode, isRandom, requiredTargetTitle));
     }
 
-    // 1-based position of the logged-in user within the full (unpaged)
-    // ranking, or null if nobody is logged in or they have no completed
-    // game matching the current filter.
-    private Integer findRank(List<LeaderboardEntryResponse> orderedEntries) {
+    // 1-based position of the logged-in user within the full ranking, or
+    // null if nobody is logged in or they have no completed game matching
+    // the current filter. Unlike the page above, this needs every row to
+    // locate one user's position — but that's bounded by the number of
+    // distinct players, not the number of games played, and only runs at
+    // all when someone is actually logged in (the common anonymous-preview
+    // case, e.g. the homepage for a logged-out visitor, skips it entirely).
+    private Integer findRank(LeaderboardSortMode sortMode, Boolean isRandom, String requiredTargetTitle) {
         String username = securityUtil.getCurrentUsernameOrNull();
         if (username == null) return null;
 
-        for (int i = 0; i < orderedEntries.size(); i++) {
-            if (orderedEntries.get(i).username().equals(username)) return i + 1;
+        List<Object[]> rows = sortMode == LeaderboardSortMode.GAMES_PLAYED
+                ? gameRepo.findLeaderboardByGamesPlayed(GameStatus.COMPLETED, isRandom, requiredTargetTitle)
+                : gameRepo.findLeaderboardByBestMoves(GameStatus.COMPLETED, isRandom, requiredTargetTitle);
+
+        for (int i = 0; i < rows.size(); i++) {
+            if (username.equals(rows.get(i)[1])) return i + 1;
         }
         return null;
     }
@@ -278,7 +290,7 @@ public class GameService {
                 .orElseThrow(() -> new EntityNotFoundException("Game not found: " + gameId));
 
         if (!game.getUser().getId().equals(user.getId()))
-            throw new SecurityException("This game does not belong to you");
+            throw new ForbiddenException("This game does not belong to you");
 
         return game;
     }
@@ -287,7 +299,7 @@ public class GameService {
         Game game = getOwnedGame(user, gameId);
 
         if (game.getStatus() != GameStatus.IN_PROGRESS)
-            throw new IllegalStateException("Game is not in progress");
+            throw new ConflictException("Game is not in progress");
 
         return game;
     }

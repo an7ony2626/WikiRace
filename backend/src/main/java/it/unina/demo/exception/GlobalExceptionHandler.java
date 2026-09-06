@@ -27,19 +27,24 @@ public class GlobalExceptionHandler {
         return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(message);
     }
 
-    @ExceptionHandler(IllegalArgumentException.class)
-    public ResponseEntity<String> handleBadRequest(IllegalArgumentException e) {
-        return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(e.getMessage());
-    }
-
     @ExceptionHandler(HttpMessageNotReadableException.class)
     public ResponseEntity<String> handleMalformedJson(HttpMessageNotReadableException e) {
         return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("Malformed JSON request");
     }
 
-    @ExceptionHandler(SecurityException.class)
-    public ResponseEntity<String> handleUnauthorized(SecurityException e) {
+    @ExceptionHandler(BadRequestException.class)
+    public ResponseEntity<String> handleBadRequest(BadRequestException e) {
+        return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(e.getMessage());
+    }
+
+    @ExceptionHandler(UnauthorizedException.class)
+    public ResponseEntity<String> handleUnauthorized(UnauthorizedException e) {
         return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(e.getMessage());
+    }
+
+    @ExceptionHandler(ForbiddenException.class)
+    public ResponseEntity<String> handleForbidden(ForbiddenException e) {
+        return ResponseEntity.status(HttpStatus.FORBIDDEN).body(e.getMessage());
     }
 
     @ExceptionHandler(EntityNotFoundException.class)
@@ -47,8 +52,8 @@ public class GlobalExceptionHandler {
         return ResponseEntity.status(HttpStatus.NOT_FOUND).body(e.getMessage());
     }
 
-    @ExceptionHandler(IllegalStateException.class)
-    public ResponseEntity<String> handleConflict(IllegalStateException e) {
+    @ExceptionHandler(ConflictException.class)
+    public ResponseEntity<String> handleConflict(ConflictException e) {
         return ResponseEntity.status(HttpStatus.CONFLICT).body(e.getMessage());
     }
 
@@ -58,14 +63,19 @@ public class GlobalExceptionHandler {
                 .body(new DuplicateGameResponse(e.getMessage(), e.getExistingGameId(), e.getExistingMoves()));
     }
 
+    @ExceptionHandler(WikiPageNotFoundException.class)
+    public ResponseEntity<String> handleWikiPageNotFound(WikiPageNotFoundException e) {
+        return ResponseEntity.status(HttpStatus.NOT_FOUND).body(e.getMessage());
+    }
+
+    // Anything else — including a stray IllegalArgumentException/
+    // IllegalStateException thrown by unrelated library code — falls
+    // through to a real 500 instead of being misreported as a fake
+    // domain-specific 400/409 the way a blanket JDK-exception handler
+    // would do.
     @ExceptionHandler(Exception.class)
     public ResponseEntity<String> handleServerError(Exception e) {
         log.error("Unhandled exception", e);
         return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("Internal server error");
-    }
-
-    @ExceptionHandler(WikiPageNotFoundException.class)
-    public ResponseEntity<String> handleWikiPageNotFound(WikiPageNotFoundException e) {
-        return ResponseEntity.status(HttpStatus.NOT_FOUND).body(e.getMessage());
     }
 }

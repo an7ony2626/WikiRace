@@ -1,4 +1,4 @@
 export const environment = {
   production: true,
-  apiUrl: 'https://road-to-unina.onrender.com/api'
+  apiUrl: 'https://wikirace-mih0.onrender.com/api'
 };

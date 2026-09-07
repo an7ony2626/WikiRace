@@ -1,7 +1,8 @@
 export const environment = {
   production: true,
-  // Relative path: nginx.conf proxies /api/* to the backend container
-  // inside the docker-compose network, so frontend and API are
-  // same-origin from the browser's point of view — no CORS involved.
-  apiUrl: '/api'
+  // Absolute URL: the live frontend is a static Cloudflare Pages site,
+  // an entirely different origin from the Render backend, so a relative
+  // path (correct only for the docker-compose nginx proxy setup) would
+  // resolve against the frontend's own domain and 404.
+  apiUrl: 'https://wikirace-mih0.onrender.com/api'
 };

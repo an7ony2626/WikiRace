@@ -1,4 +1,5 @@
-import { Observable, retry, timeout, timer } from 'rxjs';
+import { HttpErrorResponse } from '@angular/common/http';
+import { Observable, retry, throwError, timeout, timer } from 'rxjs';
 
 // Render's free tier suspends the backend after ~15 minutes idle, and
 // waking it back up can take several minutes in the worst case — a cold
@@ -19,10 +20,17 @@ export function withColdStartRetry<T>(source$: Observable<T>, onRetry?: () => vo
     timeout(ATTEMPT_TIMEOUT_MS),
     retry({
       count: MAX_RETRIES,
-      delay: () => {
+      delay: (error: unknown) => {
+        // A 4xx is a real answer from an awake backend (not logged in,
+        // not found, ...): retrying it would only delay the same result.
+        if (isClientError(error)) return throwError(() => error);
         onRetry?.();
         return timer(RETRY_DELAY_MS);
       },
     }),
   );
+}
+
+function isClientError(error: unknown): boolean {
+  return error instanceof HttpErrorResponse && error.status >= 400 && error.status < 500;
 }

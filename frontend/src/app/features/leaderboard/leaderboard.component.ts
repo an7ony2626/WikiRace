@@ -4,6 +4,7 @@ import { AuthService } from '../../core/services/auth.service';
 import { GameService } from '../../core/services/game.service';
 import { GAME_FILTER_OPTIONS, GameFilterMode, LeaderboardEntry, LeaderboardSortMode } from '../../core/models/game.model';
 import { withRequestTimeout } from '../../shared/rxjs/with-request-timeout';
+import { movesLabel } from '../../shared/duration/duration.pipe';
 import { AnimatedBackgroundComponent } from '../../shared/animated-background/animated-background.component';
 
 const PAGE_SIZE = 10;
@@ -80,7 +81,7 @@ const PAGE_SIZE = 10;
                     @case (2) { <span class="trophy" title="3° Posto">🥉</span> }
                   }
 
-                  <span class="stat mono">{{ entry.bestMoves ?? '—' }} {{ entry.gamesCompleted === 1 ? 'mossa' : 'mosse' }} (best)</span>
+                  <span class="stat mono">{{ entry.bestMoves != null ? movesLabel(entry.bestMoves) : '—' }} (best)</span>
                 </li>
               }
             </ol>
@@ -100,6 +101,7 @@ export class LeaderboardComponent implements OnInit {
   private readonly gameService = inject(GameService);
 
   protected readonly filters = GAME_FILTER_OPTIONS;
+  protected readonly movesLabel = movesLabel;
 
   readonly isLoading = signal(true);
   readonly isLoadingMore = signal(false);

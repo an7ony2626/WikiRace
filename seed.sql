@@ -3,7 +3,7 @@
 -- Demo data for the local Docker Compose setup only: a handful of
 -- users, completed games (for the leaderboard/completed list), and
 -- one in-progress game to show the "resume" flow. Never used against
--- the live deployment (Neon) — this file is mounted only by
+-- the live deployment (Supabase) — this file is mounted only by
 -- docker-compose.yml, after schema.sql, on first container start.
 --
 -- All demo accounts share the password: Demo1234!

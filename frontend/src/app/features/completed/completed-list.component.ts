@@ -3,7 +3,7 @@ import { Router, RouterLink } from '@angular/router';
 import { catchError, of } from 'rxjs';
 import { GameService } from '../../core/services/game.service';
 import { CompletedGameSummary, GAME_FILTER_OPTIONS, GameFilterMode } from '../../core/models/game.model';
-import { DurationPipe } from '../../shared/duration/duration.pipe';
+import { DurationPipe, movesLabel } from '../../shared/duration/duration.pipe';
 import { WikiPageLinkComponent } from '../../shared/wiki-page-link/wiki-page-link.component';
 import { withColdStartRetry } from '../../shared/http/cold-start-retry';
 import { AnimatedBackgroundComponent } from '../../shared/animated-background/animated-background.component';
@@ -60,7 +60,7 @@ const PAGE_SIZE = 10;
                     →
                     <app-wiki-page-link [title]="game.targetPageTitle" [stopPropagation]="true" />
                   </span>
-                  <span class="stat mono">{{ game.moves }} mosse</span>
+                  <span class="stat mono">{{ movesLabel(game.moves) }}</span>
                   <span class="stat mono">{{ game.totalTimeSeconds | duration }}</span>
                 </div>
               </li>
@@ -82,6 +82,7 @@ export class CompletedListComponent implements OnInit {
   private readonly router = inject(Router);
 
   protected readonly filters = GAME_FILTER_OPTIONS;
+  protected readonly movesLabel = movesLabel;
 
   readonly isLoading = signal(true);
   readonly isLoadingMore = signal(false);

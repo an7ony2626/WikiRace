@@ -56,13 +56,13 @@ public class GameService {
 
         List<Game> existing = gameRepo.findByUserIdAndStatus(user.getId(), GameStatus.IN_PROGRESS);
         if (!existing.isEmpty())
-            throw new ConflictException("You already have a game in progress");
+            throw new ConflictException("Hai già una partita in corso");
 
         String requestedStart = blankToNull(request.startPageTitle());
         String requestedTarget = blankToNull(request.targetPageTitle());
 
         if (requestedStart != null && requestedTarget != null && requestedStart.equalsIgnoreCase(requestedTarget))
-            throw new BadRequestException("Start and target page must be different");
+            throw new BadRequestException("La pagina di partenza e quella di arrivo devono essere diverse");
 
         boolean startIsRandom = requestedStart == null || Boolean.TRUE.equals(request.startWasRandom());
         boolean targetIsRandom = requestedTarget == null || Boolean.TRUE.equals(request.targetWasRandom());
@@ -77,7 +77,7 @@ public class GameService {
                 : pickRandomStartDistinctFrom(targetTitle);
 
         if (startTitle.equals(targetTitle))
-            throw new ConflictException("Could not pick two distinct pages, try again");
+            throw new ConflictException("Impossibile scegliere due pagine diverse, riprova");
 
         handleDuplicateCompletedGame(user, startTitle, targetTitle, Boolean.TRUE.equals(request.confirmReplaceExisting()));
 

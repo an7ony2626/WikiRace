@@ -37,6 +37,7 @@ public class GameController {
 
     private static final int DEFAULT_COMPLETED_PAGE_SIZE = 10;
     private static final int DEFAULT_LEADERBOARD_PAGE_SIZE = 10;
+    private static final int MAX_PAGE_SIZE = 50;
 
     private final GameService gameService;
 
@@ -53,6 +54,7 @@ public class GameController {
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "" + DEFAULT_LEADERBOARD_PAGE_SIZE) int size
     ) {
+        validatePaging(page, size);
         return gameService.getLeaderboard(mode.toIsRandomChallenge(), mode.toRequiredTargetTitle(), sortBy, page, size);
     }
 
@@ -94,6 +96,7 @@ public class GameController {
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "" + DEFAULT_COMPLETED_PAGE_SIZE) int size
     ) {
+        validatePaging(page, size);
         return gameService.getCompletedGames(mode.toIsRandomChallenge(), mode.toRequiredTargetTitle(), page, size);
     }
 
@@ -113,5 +116,13 @@ public class GameController {
     public ResponseEntity<GameStateResponse> createGame(@Valid @RequestBody CreateGameRequest request) {
         GameStateResponse game = gameService.createGame(request);
         return ResponseEntity.created(URI.create("/api/games/" + game.gameId())).body(game);
+    }
+
+    // PageRequest.of() throws on a negative page or a non-positive size,
+    // which would otherwise surface as a 500; an upper bound also keeps a
+    // single request from pulling the whole table.
+    private static void validatePaging(int page, int size) {
+        if (page < 0 || size < 1 || size > MAX_PAGE_SIZE)
+            throw new BadRequestException("page must be >= 0 and size between 1 and " + MAX_PAGE_SIZE);
     }
 }

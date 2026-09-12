@@ -28,14 +28,17 @@ export class AuthService {
   // "anonymous" flash because the backend was merely asleep is worse
   // than a slower first load for the case that actually needs a guard
   // decision (a direct/refreshed link into a game).
-  private readonly session$: Observable<boolean> = withColdStartRetry(
+  private readonly session$: Observable<void> = withColdStartRetry(
     this.http.get<AuthResponse>(`${environment.apiUrl}/auth/me`),
   ).pipe(
     tap((res) => this.applyAuthenticated(res.username)),
-    map(() => true),
+    map(() => undefined),
     catchError(() => {
-      this.applyAnonymous();
-      return of(false);
+      // A login/register may have completed while this check was still
+      // in flight (it started before the cookie existed): never let the
+      // stale answer overwrite that newer state.
+      if (this.state() === 'unknown') this.applyAnonymous();
+      return of(undefined);
     }),
     shareReplay(1),
   );
@@ -46,10 +49,13 @@ export class AuthService {
     this.session$.subscribe();
   }
 
-  // Used by the route guard, which does need to wait for resolution
-  // before deciding whether a protected route may be entered.
+  // Used by the route guard and by components that need a settled answer.
+  // The bootstrap check is only waited on while nothing is known yet; its
+  // replayed result is never trusted over a later login or logout, which
+  // is what previously sent freshly registered users back to /login.
   waitForSession(): Observable<boolean> {
-    return this.session$;
+    if (this.state() !== 'unknown') return of(this.isAuthenticated());
+    return this.session$.pipe(map(() => this.isAuthenticated()));
   }
 
   login(request: LoginRequest): Observable<AuthResponse> {

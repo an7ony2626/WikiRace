@@ -1,6 +1,6 @@
 # Frontend
 
-Angular SPA for Road-To-Unina, generated with Angular CLI 22.1.3.
+Angular SPA for WikiRace, generated with Angular CLI 22.1.3.
 
 **Stack:**
 - Angular 22 (standalone components, signals, `OnPush` change detection)

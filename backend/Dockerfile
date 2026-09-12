@@ -6,7 +6,9 @@ WORKDIR /app
 # as pom.xml doesn't change (faster rebuilds).
 COPY .mvn/ .mvn/
 COPY mvnw pom.xml ./
-RUN chmod +x mvnw && ./mvnw dependency:go-offline -B
+# Strip CRLF in case the repo was checked out on Windows without the
+# .gitattributes rules applied (e.g. an older clone).
+RUN sed -i 's/\r$//' mvnw && chmod +x mvnw && ./mvnw dependency:go-offline -B
 
 COPY src ./src
 RUN ./mvnw clean package -DskipTests -B

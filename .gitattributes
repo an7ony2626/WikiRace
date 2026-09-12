@@ -1,2 +1,7 @@
-/mvnw text eol=lf
+# Everything that ends up inside a Linux container (mvnw, Dockerfiles,
+# nginx.conf, SQL scripts) must keep LF line endings even on a Windows
+# checkout with core.autocrlf=true — a CRLF shebang ("#!/bin/sh\r")
+# makes the backend image build fail with "./mvnw: not found".
+* text=auto eol=lf
 *.cmd text eol=crlf
+*.bat text eol=crlf

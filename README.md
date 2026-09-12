@@ -57,7 +57,7 @@ The easiest way to start the whole project â€” frontend, backend, and database â
    On Windows (PowerShell), without OpenSSL:
 
 ```powershell
-     [Convert]::ToBase64String((1..48 | ForEach-Object { Get-Random -Maximum 256 }))
+     [Convert]::ToBase64String([byte[]](1..48 | ForEach-Object { Get-Random -Maximum 256 }))
 ```
 
 4. Start everything with Docker Compose:

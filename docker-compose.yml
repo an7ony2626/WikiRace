@@ -4,7 +4,7 @@ services:
     environment:
       POSTGRES_DB: roadtounina
       POSTGRES_USER: postgres
-      POSTGRES_PASSWORD: ${DB_PASSWORD}
+      POSTGRES_PASSWORD: ${DB_PASSWORD:?DB_PASSWORD is not set - create .env from .env.example (see README)}
     volumes:
       - ./schema.sql:/docker-entrypoint-initdb.d/01-schema.sql:ro
       - ./seed.sql:/docker-entrypoint-initdb.d/02-seed.sql:ro
@@ -21,8 +21,8 @@ services:
     build: ./backend
     environment:
       SPRING_DATASOURCE_URL: jdbc:postgresql://db:5432/roadtounina
-      DB_PASSWORD: ${DB_PASSWORD}
-      JWT_KEY: ${JWT_KEY}
+      DB_PASSWORD: ${DB_PASSWORD:?DB_PASSWORD is not set - create .env from .env.example (see README)}
+      JWT_KEY: ${JWT_KEY:?JWT_KEY is not set - create .env from .env.example (see README)}
     depends_on:
       db:
         condition: service_healthy

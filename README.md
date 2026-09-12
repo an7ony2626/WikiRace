@@ -35,8 +35,8 @@ The easiest way to start the whole project â€” frontend, backend, and database â
 1. Clone the repository:
 
 ```bash
-   git clone <repo-url>
-   cd Road-To-Unina
+   git clone https://github.com/an7ony2626/WikiRace.git
+   cd WikiRace
 ```
 
 2. Create the `.env` file from the template:

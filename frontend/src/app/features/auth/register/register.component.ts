@@ -15,7 +15,7 @@ import { AnimatedBackgroundComponent } from '../../../shared/animated-background
     <div class="auth-screen">
       <app-animated-background />
       <div class="auth-card">
-        <img class="brand-logo" src="/logo-wordmark.png" alt="WikiRace">
+        <a routerLink="/" class="brand-link" aria-label="Torna alla home"><img class="brand-logo" src="/logo-wordmark.png" alt="WikiRace"></a>
         <h1>Crea un account</h1>
 
         <form [formGroup]="form" (ngSubmit)="submit()">

@@ -29,7 +29,7 @@ test('una partita completata compare sia in "Partite concluse" che in classifica
   await page.goto('/leaderboard');
   const leaderboardRow = page.locator('.leaderboard li').filter({ hasText: user.username });
   await expect(leaderboardRow).toBeVisible();
-  await expect(leaderboardRow).toContainText('1 partite');
+  await expect(leaderboardRow).toContainText('1 partita');
 
   await page.getByRole('button', { name: 'Per partite' }).click();
   await expect(leaderboardRow).toBeVisible();

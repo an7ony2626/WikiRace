@@ -1,4 +1,3 @@
-// dto/response/WikiSearchResultResponse.java
 package it.unina.demo.dto.response;
 
 public record WikiSearchResultResponse(

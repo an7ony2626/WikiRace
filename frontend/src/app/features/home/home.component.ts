@@ -17,7 +17,7 @@ import { WikiSearchResult } from '../../core/models/wiki-search.model';
 import { PageSearchComponent } from '../../shared/page-search/page-search.component';
 import { AnimatedBackgroundComponent } from '../../shared/animated-background/animated-background.component';
 import { ConfirmDialogComponent } from '../../shared/confirm-dialog/confirm-dialog.component';
-import { withRequestTimeout } from '../../shared/rxjs/with-request-timeout';
+import { movesLabel } from '../../shared/duration/duration.pipe';
 import { withColdStartRetry } from '../../shared/http/cold-start-retry';
 
 // Both the leaderboard and completed-games panels on the home page show
@@ -77,7 +77,7 @@ const HOME_PREVIEW_SIZE = 5;
                 →
                 <strong>{{ currentGame()!.targetPageTitle }}</strong>
               </p>
-              <p class="muted">{{ currentGame()!.moves }} mosse fatte finora</p>
+              <p class="muted">{{ movesLabel(currentGame()!.moves) }} finora</p>
               <button type="button" class="cta" (click)="resumeGame()">Riprendi la sfida</button>
             } @else {
               <h1>Pronto per una sfida?</h1>
@@ -167,7 +167,7 @@ const HOME_PREVIEW_SIZE = 5;
                       @case (2) { <span class="trophy" title="3° Posto">🥉</span> }
                     }
 
-                    <span class="stat mono">{{ entry.bestMoves ?? '—' }} {{ entry.gamesCompleted === 1 ? 'mossa' : 'mosse' }} (best)</span>
+                    <span class="stat mono">{{ entry.bestMoves != null ? movesLabel(entry.bestMoves) : '—' }} (best)</span>
 
                   </li>
                 }
@@ -205,7 +205,7 @@ const HOME_PREVIEW_SIZE = 5;
                   <a class="completed-row" [routerLink]="['/completed', game.gameId]">
                     <span class="name">{{ game.username }}</span>
                     <span class="route-labels small">{{ game.startPageTitle }} → {{ game.targetPageTitle }}</span>
-                    <span class="stat mono">{{ game.moves }} mosse</span>
+                    <span class="stat mono">{{ movesLabel(game.moves) }}</span>
                   </a>
                 </li>
               }
@@ -232,6 +232,7 @@ export class HomeComponent implements OnInit {
   private readonly router = inject(Router);
 
   protected readonly filters = GAME_FILTER_OPTIONS;
+  protected readonly movesLabel = movesLabel;
 
   readonly isLoadingCurrent = signal(true);
   readonly isLoadingLeaderboard = signal(true);
@@ -253,7 +254,7 @@ export class HomeComponent implements OnInit {
   readonly duplicateGameMessage = computed(() => {
     const pending = this.pendingDuplicateGame();
     if (!pending) return '';
-    return `${pending.message} (${pending.existingMoves} mosse). Continuando, quella partita verrà eliminata.`;
+    return `${pending.message} (${movesLabel(pending.existingMoves)}). Continuando, quella partita verrà eliminata.`;
   });
   readonly currentGame = signal<GameState | null>(null);
   readonly leaderboard = signal<LeaderboardEntry[]>([]);
@@ -274,11 +275,16 @@ export class HomeComponent implements OnInit {
   readonly progressX = signal(16);
 
   ngOnInit(): void {
-    if (this.auth.isAuthenticated()) {
-      this.loadCurrentGame();
-    } else {
-      this.isLoadingCurrent.set(false);
-    }
+    // The session check started at bootstrap may still be in flight on a
+    // fresh page load: wait for it, otherwise a logged-in player with a
+    // game in progress would be offered a new game instead of "Riprendi".
+    this.auth.waitForSession().subscribe((authenticated) => {
+      if (authenticated) {
+        this.loadCurrentGame();
+      } else {
+        this.isLoadingCurrent.set(false);
+      }
+    });
     this.loadLeaderboard();
     this.loadCompleted();
   }

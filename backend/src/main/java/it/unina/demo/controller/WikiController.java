@@ -1,7 +1,6 @@
-// controller/WikiController.java
 package it.unina.demo.controller;
 
-import io.swagger.v3.oas.annotations.security.SecurityRequirements;
+import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import it.unina.demo.dto.response.WikiSearchResultResponse;
 import it.unina.demo.service.wiki.PageSearchResult;
 import it.unina.demo.service.wiki.WikiContentService;
@@ -13,12 +12,13 @@ import org.springframework.web.bind.annotation.RestController;
 
 import java.util.List;
 
-// Public: picking a start/target page happens before a game (and thus
-// before any auth check) even exists, so this can't require a token.
+// Requires authentication (default rule in SecurityConfig): pages are only
+// picked from the new-game form, which is shown to logged-in players only,
+// so there's no reason to expose a public proxy to Wikipedia's API.
 @RestController
 @RequestMapping("/api/wiki")
 @RequiredArgsConstructor
-@SecurityRequirements
+@SecurityRequirement(name = "bearerAuth")
 public class WikiController {
 
     private final WikiContentService wikiContentService;
@@ -30,7 +30,6 @@ public class WikiController {
                 .toList();
     }
 
-    // controller/WikiController.java — aggiungi accanto a /search
     @GetMapping("/random")
     public WikiSearchResultResponse random() {
         PageSearchResult result = wikiContentService.getRandomPage();

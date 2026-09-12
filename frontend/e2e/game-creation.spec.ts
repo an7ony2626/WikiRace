@@ -38,6 +38,6 @@ test('non è possibile creare una sfida con la stessa pagina di partenza e di ar
 
   await page.getByRole('button', { name: 'Inizia una nuova sfida' }).click();
 
-  await expect(page.getByText('Start and target page must be different')).toBeVisible();
+  await expect(page.getByText('La pagina di partenza e quella di arrivo devono essere diverse')).toBeVisible();
   await expect(page).toHaveURL('/');
 });

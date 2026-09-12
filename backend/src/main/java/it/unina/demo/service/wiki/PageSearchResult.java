@@ -1,4 +1,3 @@
-// service/wiki/PageSearchResult.java
 package it.unina.demo.service.wiki;
 
 // Implementation-agnostic search hit: title to start a game with,

@@ -15,6 +15,7 @@ import org.springframework.security.authentication.UsernamePasswordAuthenticatio
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.core.userdetails.UserDetailsService;
+import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.security.web.authentication.WebAuthenticationDetailsSource;
 import org.springframework.stereotype.Component;
 import org.springframework.web.filter.OncePerRequestFilter;
@@ -42,8 +43,10 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
         if (jwt != null && SecurityContextHolder.getContext().getAuthentication() == null) {
             try {
                 authenticate(jwt, request);
-            } catch (JwtException | IllegalArgumentException e) {
-                // Malformed, expired, or tampered token: proceed unauthenticated
+            } catch (JwtException | IllegalArgumentException | UsernameNotFoundException e) {
+                // Malformed, expired, or tampered token — or a valid one whose
+                // user no longer exists (e.g. the database was reset while the
+                // browser kept the cookie): proceed unauthenticated
                 // instead of letting the exception escape the filter chain —
                 // filters run before @ControllerAdvice ever sees anything, so
                 // an uncaught exception here becomes a raw 500 instead of the

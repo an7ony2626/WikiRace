@@ -7,6 +7,7 @@ import io.jsonwebtoken.security.Keys;
 import it.unina.demo.entity.User;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.security.core.userdetails.UserDetails;
+import jakarta.annotation.PostConstruct;
 import org.springframework.stereotype.Service;
 
 import javax.crypto.SecretKey;
@@ -27,6 +28,19 @@ public class JwtService {
     // cookie Max-Age must match this, or the cookie could outlive (or
     // expire before) the token it carries.
     public static final Duration TOKEN_TTL = Duration.ofHours(12);
+
+    // Fails at startup with an actionable message instead of a bare 500 on
+    // the first login: the key must be Base64 and decode to >= 256 bits.
+    @PostConstruct
+    void validateKey() {
+        try {
+            getSignInKey();
+        } catch (RuntimeException e) {
+            throw new IllegalStateException(
+                    "JWT_KEY is invalid: it must be a Base64 string of at least 32 bytes "
+                            + "(generate one with `openssl rand -base64 48`). Cause: " + e.getMessage(), e);
+        }
+    }
 
     public String generateToken(User user) {
         return Jwts.builder()

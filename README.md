@@ -18,7 +18,7 @@ The app is deployed and publicly accessible at:
 Deployment setup:
 - **Frontend:** Cloudflare Pages
 - **Backend:** Render (free tier)
-- **Database:** Neon (PostgreSQL)
+- **Database:** Supabase (PostgreSQL)
 
 > ⚠️ **Note:** the backend runs on Render's free tier, which spins down after a period of inactivity. If the site hasn't been used in a while, the first request after that can take a minute or two while the backend wakes back up. Subsequent requests will be fast again.
 
@@ -48,10 +48,16 @@ The easiest way to start the whole project — frontend, backend, and database �
 3. Open `.env` and set two values:
 
    - `DB_PASSWORD`: any password for the local database
-   - `JWT_KEY`: a secret string used by the backend to sign authentication tokens. It's not a token you need to obtain from any external service — it's an arbitrary key, it just needs to be long enough (at least 32 characters). You can generate a random one with:
+   - `JWT_KEY`: a secret key used by the backend to sign authentication tokens. It's not a token you need to obtain from any external service, but it **must be a Base64-encoded string of at least 32 bytes** (i.e. at least 44 Base64 characters) — a plain arbitrary string will not work, and the backend refuses to start with an invalid key. Generate a random one with:
 
 ```bash
      openssl rand -base64 48
+```
+
+   On Windows (PowerShell), without OpenSSL:
+
+```powershell
+     [Convert]::ToBase64String((1..48 | ForEach-Object { Get-Random -Maximum 256 }))
 ```
 
 4. Start everything with Docker Compose:
@@ -87,4 +93,20 @@ docker compose down -v
 
 ## Local development (without Docker)
 
-If you prefer to work without containers, check the specific READMEs in `backend/` and `frontend/` for instructions on running Spring Boot and Angular CLI locally.
+If you prefer to work without containers (requires Java 21, Node.js 22 and a local PostgreSQL):
+
+1. Create a `roadtounina` database and initialize it with `schema.sql` (and optionally `seed.sql`).
+2. Start the backend from `backend/`, with `DB_PASSWORD` (password of the `postgres` user) and `JWT_KEY` set as environment variables:
+
+```bash
+   ./mvnw spring-boot:run
+```
+
+3. Start the frontend from `frontend/` — see [frontend/README.md](frontend/README.md) for details:
+
+```bash
+   npm install
+   npm start
+```
+
+The app is then available at http://localhost:4200 (the Angular dev server proxies `/api` to the backend on port 8080).

@@ -4,7 +4,7 @@ import { toSignal } from '@angular/core/rxjs-interop';
 import { debounceTime, distinctUntilChanged, of, switchMap, tap } from 'rxjs';
 import { WikiService } from '../../core/services/wiki.service';
 import { WikiSearchResult } from '../../core/models/wiki-search.model';
-import { WikiPageCardComponent, WikiRouteSide } from '../wiki-route/wiki-route.component';
+import { WikiPageCardComponent } from '../wiki-route/wiki-route.component';
 
 @Component({
   selector: 'app-page-search',
@@ -16,7 +16,7 @@ import { WikiPageCardComponent, WikiRouteSide } from '../wiki-route/wiki-route.c
       <label class="field-label">{{ label() }}</label>
 
       @if (selected(); as page) {
-        <app-wiki-page-card class="selected-page" [title]="page.title" [thumbnail]="page.thumbnailUrl" [side]="side()">
+        <app-wiki-page-card class="selected-page" [title]="page.title" [thumbnail]="page.thumbnailUrl">
           <button type="button" class="change-button" (click)="clear()">Cambia</button>
         </app-wiki-page-card>
       } @else {
@@ -68,7 +68,6 @@ export class PageSearchComponent {
   private readonly wikiService = inject(WikiService);
 
   readonly label = input.required<string>();
-  readonly side = input<WikiRouteSide>('start');
   // Carries whether this pick came from the 🎲 Random button — the
   // parent needs this to tell GameService the choice was left to
   // chance, not typed in by the player.

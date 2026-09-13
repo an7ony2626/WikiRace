@@ -5,10 +5,11 @@
 }
 
 .topbar {
-  display: flex;
-  flex-wrap: wrap;
+  // Equal side columns keep the search bar centred on the screen, however
+  // long the page titles on the left are.
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 340px) minmax(0, 1fr);
   align-items: center;
-  justify-content: space-between;
   gap: 12px 24px;
   padding: 12px 28px;
   border-bottom: 1px solid var(--line);
@@ -19,12 +20,13 @@
 }
 
 .route-labels {
+  grid-column: 1;
   display: flex;
   min-width: 0;
 }
 
 .find-bar {
-  flex: 0 1 380px;
+  grid-column: 2;
   display: flex;
   align-items: center;
   gap: 4px;
@@ -92,13 +94,36 @@
 }
 
 @media (max-width: 900px) {
+  .topbar {
+    grid-template-columns: minmax(0, 1fr) auto;
+  }
+
   .find-bar {
-    order: 3;
-    flex-basis: 100%;
+    grid-column: 1 / -1;
+    grid-row: 2;
+  }
+}
+
+// Phones: titles, actions and search each get their own row, otherwise
+// the actions squeeze the page titles down to nothing.
+@media (max-width: 600px) {
+  .topbar {
+    grid-template-columns: minmax(0, 1fr);
+    padding-inline: 16px;
+  }
+
+  .topbar-actions {
+    grid-row: 2;
+  }
+
+  .find-bar {
+    grid-row: 3;
   }
 }
 
 .topbar-actions {
+  grid-column: -2;
+  justify-self: end;
   display: flex;
   align-items: center;
   gap: 16px;

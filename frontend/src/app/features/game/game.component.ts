@@ -1,18 +1,32 @@
-import { ChangeDetectionStrategy, Component, OnDestroy, OnInit, inject, signal } from '@angular/core';
+import {
+  ChangeDetectionStrategy,
+  Component,
+  ElementRef,
+  OnDestroy,
+  OnInit,
+  inject,
+  signal,
+  viewChild,
+} from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
 import { GameService } from '../../core/services/game.service';
 import { GameState } from '../../core/models/game.model';
-import { WikiArticleComponent } from './wiki-article/wiki-article.component';
+import {
+  ArticleSearchState,
+  MIN_SEARCH_LENGTH,
+  WikiArticleComponent,
+} from './wiki-article/wiki-article.component';
 import { GamePathComponent } from '../../shared/game-path/game-path.component';
-import { WikiPageLinkComponent } from '../../shared/wiki-page-link/wiki-page-link.component';
+import { WikiRouteComponent } from '../../shared/wiki-route/wiki-route.component';
 import { movesLabel } from '../../shared/duration/duration.pipe';
 import { withRequestTimeout } from '../../shared/rxjs/with-request-timeout';
 
 @Component({
   selector: 'app-game',
-  imports: [WikiArticleComponent, GamePathComponent, WikiPageLinkComponent],
+  imports: [WikiArticleComponent, GamePathComponent, WikiRouteComponent],
   changeDetection: ChangeDetectionStrategy.OnPush,
   styleUrl: 'game.component.scss',
+  host: { '(document:keydown)': 'onDocumentKeydown($event)' },
   template: `
     <div class="page">
       @if (isNavigating()) {
@@ -22,11 +36,52 @@ import { withRequestTimeout } from '../../shared/rxjs/with-request-timeout';
       <header class="topbar">
         <span class="route-labels">
           @if (game(); as g) {
-            <app-wiki-page-link [title]="g.startPageTitle" [bold]="true" />
-            →
-            <app-wiki-page-link [title]="g.targetPageTitle" [bold]="true" />
+            <app-wiki-route [start]="g.startPageTitle" [target]="g.targetPageTitle" size="compact" />
           }
         </span>
+
+        @if (isArticleVisible()) {
+          <div class="find-bar" role="search">
+            <svg class="find-icon" viewBox="0 0 16 16" width="15" height="15" aria-hidden="true">
+              <circle cx="7" cy="7" r="4.5" fill="none" stroke="currentColor" stroke-width="1.8" />
+              <path d="m10.5 10.5 3.5 3.5" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" />
+            </svg>
+            <input
+              #findInput
+              type="search"
+              class="find-input"
+              placeholder="Cerca nella pagina"
+              aria-label="Cerca nella pagina"
+              enterkeyhint="search"
+              [value]="searchQuery()"
+              (input)="searchQuery.set(findInput.value)"
+              (keydown.enter)="goToMatch(1)"
+              (keydown.shift.enter)="goToMatch(-1)"
+              (keydown.escape)="clearSearch()"
+            />
+            @if (searchQuery().trim().length >= minSearchLength) {
+              <span class="find-count mono" [class.none]="searchState().total === 0" aria-live="polite">
+                {{ searchState().total === 0 ? 'Nessun risultato' : searchState().current + '/' + searchState().total }}
+              </span>
+            }
+            <button
+              type="button"
+              class="find-nav"
+              aria-label="Risultato precedente"
+              title="Precedente (Maiusc+Invio)"
+              [disabled]="searchState().total === 0"
+              (click)="goToMatch(-1)"
+            >↑</button>
+            <button
+              type="button"
+              class="find-nav"
+              aria-label="Risultato successivo"
+              title="Successivo (Invio)"
+              [disabled]="searchState().total === 0"
+              (click)="goToMatch(1)"
+            >↓</button>
+          </div>
+        }
         <div class="topbar-actions">
           <span class="timer mono">{{ elapsedLabel() }}</span>
           <span class="steps mono">{{ movesLabel(game()?.moves ?? 0) }}</span>
@@ -44,13 +99,13 @@ import { withRequestTimeout } from '../../shared/rxjs/with-request-timeout';
         <div class="completed-overlay">
           <div class="completed-card">
             <h1>Traguardo raggiunto</h1>
+            <app-wiki-route
+              class="completed-route"
+              [start]="game()!.startPageTitle"
+              [target]="game()!.targetPageTitle"
+            />
             <p class="muted">
-              Da
-              <app-wiki-page-link [title]="game()!.startPageTitle" [bold]="true" />
-              a
-              <app-wiki-page-link [title]="game()!.targetPageTitle" [bold]="true" />
-              in
-              <strong>{{ movesLabel(game()!.moves) }}</strong> e
+              In <strong>{{ movesLabel(game()!.moves) }}</strong> e
               <strong>{{ elapsedLabel() }}</strong>.
             </p>
             <app-game-path [path]="game()!.path" />
@@ -64,6 +119,8 @@ import { withRequestTimeout } from '../../shared/rxjs/with-request-timeout';
         <app-wiki-article
           [html]="game()?.currentPageContent ?? ''"
           [disabled]="isNavigating()"
+          [searchQuery]="searchQuery()"
+          (searchStateChange)="searchState.set($event)"
           (titleClicked)="followLink($event)"
         />
       }
@@ -82,12 +139,18 @@ export class GameComponent implements OnInit, OnDestroy {
   readonly errorMessage = signal<string | null>(null);
   readonly isCompleted = signal(false);
   readonly elapsedLabel = signal('00:00');
+  readonly searchQuery = signal('');
+  readonly searchState = signal<ArticleSearchState>({ current: 0, total: 0 });
+
+  private readonly article = viewChild(WikiArticleComponent);
+  private readonly findInput = viewChild<ElementRef<HTMLInputElement>>('findInput');
 
   private timerHandle?: ReturnType<typeof setInterval>;
   private baselineElapsedSeconds = 0;
   private baselineWallClockMs = 0;
 
   protected readonly movesLabel = movesLabel;
+  protected readonly minSearchLength = MIN_SEARCH_LENGTH;
 
   ngOnInit(): void {
     this.loadGame();
@@ -115,6 +178,29 @@ export class GameComponent implements OnInit, OnDestroy {
 
   ngOnDestroy(): void {
     this.stopTimer();
+  }
+
+  protected isArticleVisible(): boolean {
+    return !this.isLoading() && !this.loadFailed() && !this.isCompleted();
+  }
+
+  goToMatch(delta: 1 | -1): void {
+    this.article()?.goToMatch(delta);
+  }
+
+  clearSearch(): void {
+    this.searchQuery.set('');
+  }
+
+  // The search bar is always on screen, so Ctrl/Cmd+F lands in it instead
+  // of opening the browser's own find bar — one search, not two.
+  protected onDocumentKeydown(event: KeyboardEvent): void {
+    const input = this.findInput()?.nativeElement;
+    if (!input || !(event.ctrlKey || event.metaKey) || event.key.toLowerCase() !== 'f') return;
+
+    event.preventDefault();
+    input.focus();
+    input.select();
   }
 
   followLink(clickedTitle: string): void {

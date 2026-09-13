@@ -6,9 +6,11 @@
 
 .topbar {
   display: flex;
+  flex-wrap: wrap;
   align-items: center;
   justify-content: space-between;
-  padding: 16px 28px;
+  gap: 12px 24px;
+  padding: 12px 28px;
   border-bottom: 1px solid var(--line);
   background: var(--paper-raised);
   position: sticky;
@@ -17,8 +19,83 @@
 }
 
 .route-labels {
-  font-family: var(--font-display);
-  font-size: 16px;
+  display: flex;
+  min-width: 0;
+}
+
+.find-bar {
+  flex: 0 1 380px;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  padding: 0 6px 0 12px;
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  background: var(--paper);
+  color: var(--ink-soft);
+
+  &:focus-within {
+    border-color: var(--wiki-blue);
+    background: var(--paper-raised);
+  }
+}
+
+.find-icon {
+  flex-shrink: 0;
+}
+
+.find-input {
+  flex: 1;
+  min-width: 0;
+  padding: 8px 6px;
+  border: none;
+  background: transparent;
+  font-family: var(--font-body);
+  font-size: 14px;
+  color: var(--ink);
+
+  &:focus {
+    outline: none;
+  }
+}
+
+.find-count {
+  flex-shrink: 0;
+  font-size: 12px;
+  padding: 0 4px;
+
+  &.none {
+    color: var(--route-red);
+    font-family: var(--font-body);
+  }
+}
+
+.find-nav {
+  flex-shrink: 0;
+  width: 28px;
+  height: 28px;
+  border: none;
+  border-radius: 50%;
+  background: none;
+  color: var(--ink);
+  font-size: 15px;
+  cursor: pointer;
+
+  &:hover:not(:disabled) {
+    background: var(--line);
+  }
+
+  &:disabled {
+    color: var(--line);
+    cursor: default;
+  }
+}
+
+@media (max-width: 900px) {
+  .find-bar {
+    order: 3;
+    flex-basis: 100%;
+  }
 }
 
 .topbar-actions {
@@ -112,6 +189,10 @@
   box-shadow: var(--shadow-card);
   padding: 40px 36px;
   max-width: 640px;
+}
+
+.completed-route {
+  margin: 20px 0 8px;
 }
 
 ::ng-deep .completed-card .path-card {

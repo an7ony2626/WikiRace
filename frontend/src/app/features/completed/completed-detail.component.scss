@@ -44,6 +44,7 @@
   border-radius: var(--radius);
   box-shadow: var(--shadow-card);
   padding: 28px 32px;
+  text-align: center;
 }
 
 .username {
@@ -51,9 +52,8 @@
   margin: 0 0 8px;
 }
 
-.route-labels {
-  font-size: 18px;
-  margin: 0 0 8px;
+.route {
+  margin: 12px 0 16px;
 }
 
 .muted {

@@ -1,0 +1,34 @@
+:host {
+  display: flex;
+  align-items: flex-start;
+  justify-content: center;
+  gap: 20px;
+}
+
+.arrow {
+  flex-shrink: 0;
+  // Vertically centred on the 88px thumbnails.
+  margin-top: 26px;
+  font-size: 30px;
+  line-height: 1;
+  color: var(--ink-soft);
+}
+
+:host(.compact) {
+  display: inline-flex;
+  align-items: center;
+  justify-content: flex-start;
+  gap: 10px;
+  min-width: 0;
+
+  .arrow {
+    margin-top: 0;
+    font-size: 16px;
+  }
+}
+
+@media (max-width: 480px) {
+  :host(:not(.compact)) {
+    gap: 8px;
+  }
+}

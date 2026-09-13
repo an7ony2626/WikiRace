@@ -1,0 +1,144 @@
+:host {
+  --ring: var(--wiki-blue);
+  display: block;
+  min-width: 0;
+}
+
+:host(.target) {
+  --ring: var(--route-red);
+}
+
+.tile {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 10px;
+  width: 180px;
+  max-width: 100%;
+  padding: 6px;
+  border-radius: var(--radius);
+  color: var(--ink);
+  text-decoration: none;
+
+  &:focus-visible {
+    outline: 2px solid var(--ring);
+    outline-offset: 2px;
+  }
+}
+
+.thumb {
+  flex-shrink: 0;
+  display: grid;
+  place-items: center;
+  width: 88px;
+  height: 88px;
+  border-radius: 50%;
+  overflow: hidden;
+  background: var(--paper);
+  border: 3px solid var(--paper-raised);
+  box-shadow: 0 0 0 2px var(--ring);
+
+  img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+  }
+}
+
+.initial {
+  font-family: var(--font-display);
+  font-size: 34px;
+  color: var(--ink-soft);
+}
+
+.text {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+  min-width: 0;
+}
+
+.name {
+  font-weight: 600;
+  font-size: 16px;
+  line-height: 1.3;
+  text-align: center;
+  overflow-wrap: anywhere;
+  text-decoration: underline;
+  text-decoration-color: transparent;
+  text-underline-offset: 3px;
+}
+
+.hint {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 12px;
+  color: var(--wiki-blue);
+}
+
+.tile:hover {
+  .name {
+    color: var(--wiki-blue);
+    text-decoration-color: currentColor;
+  }
+
+  .hint {
+    color: var(--wiki-blue-dark);
+  }
+
+  .thumb {
+    box-shadow: 0 0 0 3px var(--ring), var(--shadow-card);
+  }
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  .thumb {
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
+  }
+
+  .name {
+    transition: color 0.15s ease, text-decoration-color 0.15s ease;
+  }
+
+  .tile:hover .thumb {
+    transform: scale(1.05);
+  }
+}
+
+// Compact variant: a single row, sized for the in-game top bar.
+:host(.compact) {
+  .tile {
+    flex-direction: row;
+    gap: 8px;
+    width: auto;
+    padding: 2px 6px 2px 2px;
+  }
+
+  .thumb {
+    width: 32px;
+    height: 32px;
+    border-width: 2px;
+  }
+
+  .initial {
+    font-size: 15px;
+  }
+
+  .text {
+    flex-direction: row;
+    gap: 4px;
+  }
+
+  .name {
+    font-family: var(--font-display);
+    font-size: 16px;
+    text-align: left;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    max-width: 28ch;
+    overflow-wrap: normal;
+  }
+}

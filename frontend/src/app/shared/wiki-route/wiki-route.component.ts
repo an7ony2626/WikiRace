@@ -3,6 +3,7 @@ import { wikiUrl } from '../wiki-link/wiki-link';
 import { fetchWikiThumbnail } from '../wiki-link/wiki-thumbnail';
 
 export type WikiRouteSize = 'large' | 'compact';
+export type WikiRouteSide = 'start' | 'target';
 
 // One side of the route: thumbnail + title, the whole block being a link
 // to the Wikipedia article. The ring colour matches the blue (start) and
@@ -26,7 +27,7 @@ export type WikiRouteSize = 'large' | 'compact';
     >
       <span class="thumb" aria-hidden="true">
         @if (thumbnailUrl(); as src) {
-          <img [src]="src" alt="" (error)="imageFailed.set(true)" />
+          <img [src]="src" alt="" (error)="failedSrc.set(src)" />
         } @else {
           <span class="initial">{{ initial() }}</span>
         }
@@ -47,37 +48,74 @@ export type WikiRouteSize = 'large' | 'compact';
 })
 export class WikiPageTileComponent {
   readonly title = input.required<string>();
-  readonly side = input<'start' | 'target'>('start');
+  readonly side = input<WikiRouteSide>('start');
   readonly size = input<WikiRouteSize>('large');
+  // Pass it when the caller already has it (e.g. a search result) to skip
+  // the lookup; null means "known to have no image". Left undefined, the
+  // thumbnail is fetched from Wikipedia.
+  readonly thumbnail = input<string | null | undefined>(undefined);
 
   protected readonly wikiUrl = wikiUrl;
-  protected readonly imageFailed = signal(false);
+  // The URL that failed to load, so a later page with a different image
+  // isn't stuck on the placeholder.
+  protected readonly failedSrc = signal<string | null>(null);
 
-  private readonly thumbnail = resource({
-    params: () => this.title(),
-    loader: ({ params }) => {
-      this.imageFailed.set(false);
-      return fetchWikiThumbnail(params);
-    },
+  private readonly fetched = resource({
+    // undefined params keep the resource idle: nothing to fetch.
+    params: () => (this.thumbnail() === undefined ? this.title() : undefined),
+    loader: ({ params }) => fetchWikiThumbnail(params),
   });
 
-  protected readonly thumbnailUrl = computed(() =>
-    !this.imageFailed() && this.thumbnail.hasValue() ? this.thumbnail.value() : null,
-  );
+  protected readonly thumbnailUrl = computed(() => {
+    const known = this.thumbnail();
+    const src = known !== undefined ? known : this.fetched.hasValue() ? this.fetched.value() : null;
+    return src === this.failedSrc() ? null : src;
+  });
 
   protected readonly initial = computed(() => this.title().trim().charAt(0).toUpperCase());
 }
 
+// The page in its own card: used both while picking the pages of a new
+// game and wherever a game's route is shown afterwards, so the two look
+// the same. Projected content (e.g. a "Cambia" button) goes under the page.
+@Component({
+  selector: 'app-wiki-page-card',
+  imports: [WikiPageTileComponent],
+  changeDetection: ChangeDetectionStrategy.OnPush,
+  styleUrl: 'wiki-page-card.component.scss',
+  template: `
+    <app-wiki-page-tile [title]="title()" [side]="side()" [thumbnail]="thumbnail()" />
+    <ng-content />
+  `,
+})
+export class WikiPageCardComponent {
+  readonly title = input.required<string>();
+  readonly side = input<WikiRouteSide>('start');
+  readonly thumbnail = input<string | null | undefined>(undefined);
+}
+
 @Component({
   selector: 'app-wiki-route',
-  imports: [WikiPageTileComponent],
+  imports: [WikiPageTileComponent, WikiPageCardComponent],
   changeDetection: ChangeDetectionStrategy.OnPush,
   styleUrl: 'wiki-route.component.scss',
   host: { '[class.compact]': "size() === 'compact'" },
   template: `
-    <app-wiki-page-tile [title]="start()" side="start" [size]="size()" />
-    <span class="arrow" aria-label="verso">→</span>
-    <app-wiki-page-tile [title]="target()" side="target" [size]="size()" />
+    @if (size() === 'compact') {
+      <app-wiki-page-tile [title]="start()" side="start" size="compact" />
+      <span class="arrow" aria-label="verso">→</span>
+      <app-wiki-page-tile [title]="target()" side="target" size="compact" />
+    } @else {
+      <div class="side">
+        <span class="field-label">Pagina di partenza</span>
+        <app-wiki-page-card [title]="start()" side="start" />
+      </div>
+      <span class="arrow" aria-label="verso">→</span>
+      <div class="side">
+        <span class="field-label">Pagina di arrivo</span>
+        <app-wiki-page-card [title]="target()" side="target" />
+      </div>
+    }
   `,
 })
 export class WikiRouteComponent {

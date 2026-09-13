@@ -4,10 +4,11 @@ import { toSignal } from '@angular/core/rxjs-interop';
 import { debounceTime, distinctUntilChanged, of, switchMap, tap } from 'rxjs';
 import { WikiService } from '../../core/services/wiki.service';
 import { WikiSearchResult } from '../../core/models/wiki-search.model';
+import { WikiPageCardComponent, WikiRouteSide } from '../wiki-route/wiki-route.component';
 
 @Component({
   selector: 'app-page-search',
-  imports: [ReactiveFormsModule],
+  imports: [ReactiveFormsModule, WikiPageCardComponent],
   changeDetection: ChangeDetectionStrategy.OnPush,
   styleUrl: './page-search.component.scss',
   template: `
@@ -15,23 +16,9 @@ import { WikiSearchResult } from '../../core/models/wiki-search.model';
       <label class="field-label">{{ label() }}</label>
 
       @if (selected(); as page) {
-        <div class="selected-page">
-          <span class="thumb" [class.placeholder]="!page.thumbnailUrl">
-            @if (page.thumbnailUrl) {
-              <img [src]="page.thumbnailUrl" [alt]="page.title" />
-            }
-          </span>
-          <a
-            class="title"
-            [href]="wikiUrl(page.title)"
-            target="_blank"
-            rel="noopener noreferrer"
-            title="Apri su Wikipedia"
-          >
-            {{ page.title }}
-          </a>
+        <app-wiki-page-card class="selected-page" [title]="page.title" [thumbnail]="page.thumbnailUrl" [side]="side()">
           <button type="button" class="change-button" (click)="clear()">Cambia</button>
-        </div>
+        </app-wiki-page-card>
       } @else {
         <div class="search-row">
           <input
@@ -81,6 +68,7 @@ export class PageSearchComponent {
   private readonly wikiService = inject(WikiService);
 
   readonly label = input.required<string>();
+  readonly side = input<WikiRouteSide>('start');
   // Carries whether this pick came from the 🎲 Random button — the
   // parent needs this to tell GameService the choice was left to
   // chance, not typed in by the player.
@@ -105,13 +93,6 @@ export class PageSearchComponent {
     ),
     { initialValue: [] as WikiSearchResult[] },
   );
-
-  // Builds a direct link to the Italian Wikipedia article so the player
-  // can open it in a new tab to see what a random/unfamiliar page is
-  // actually about, without leaving the current challenge.
-  wikiUrl(title: string): string {
-    return `https://it.wikipedia.org/wiki/${encodeURIComponent(title.replace(/ /g, '_'))}`;
-  }
 
   select(result: WikiSearchResult, wasRandom = false): void {
     this.selected.set(result);

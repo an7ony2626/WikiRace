@@ -87,9 +87,9 @@ const HOME_PREVIEW_SIZE = 5;
               </p>
 
               <div class="page-picker">
-                <app-page-search label="Pagina di partenza" (pageSelected)="onStartPageSelected($event)" />
+                <app-page-search label="Pagina di partenza" side="start" (pageSelected)="onStartPageSelected($event)" />
                 <span class="picker-arrow" aria-hidden="true">→</span>
-                <app-page-search label="Pagina di arrivo" (pageSelected)="onTargetPageSelected($event)" />
+                <app-page-search label="Pagina di arrivo" side="target" (pageSelected)="onTargetPageSelected($event)" />
               </div>
 
               @if (startErrorMessage()) {

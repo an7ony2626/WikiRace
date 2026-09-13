@@ -12,9 +12,8 @@
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 10px;
-  width: 180px;
-  max-width: 100%;
+  gap: 12px;
+  width: 100%;
   padding: 6px;
   border-radius: var(--radius);
   color: var(--ink);
@@ -30,13 +29,13 @@
   flex-shrink: 0;
   display: grid;
   place-items: center;
-  width: 88px;
-  height: 88px;
+  width: 128px;
+  height: 128px;
   border-radius: 50%;
   overflow: hidden;
   background: var(--paper);
   border: 3px solid var(--paper-raised);
-  box-shadow: 0 0 0 2px var(--ring);
+  box-shadow: 0 0 0 3px var(--ring);
 
   img {
     width: 100%;
@@ -47,7 +46,7 @@
 
 .initial {
   font-family: var(--font-display);
-  font-size: 34px;
+  font-size: 48px;
   color: var(--ink-soft);
 }
 
@@ -61,7 +60,7 @@
 
 .name {
   font-weight: 600;
-  font-size: 16px;
+  font-size: 17px;
   line-height: 1.3;
   text-align: center;
   overflow-wrap: anywhere;
@@ -89,7 +88,7 @@
   }
 
   .thumb {
-    box-shadow: 0 0 0 3px var(--ring), var(--shadow-card);
+    box-shadow: 0 0 0 4px var(--ring), var(--shadow-card);
   }
 }
 
@@ -120,6 +119,11 @@
     width: 32px;
     height: 32px;
     border-width: 2px;
+    box-shadow: 0 0 0 2px var(--ring);
+  }
+
+  .tile:hover .thumb {
+    box-shadow: 0 0 0 2px var(--ring);
   }
 
   .initial {

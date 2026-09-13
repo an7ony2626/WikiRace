@@ -1,0 +1,59 @@
+// Large layout mirrors the new-game page picker (see home.component.scss
+// .page-picker), so a game in progress looks like the pages just picked.
+:host {
+  display: flex;
+  align-items: stretch;
+  gap: 16px;
+  text-align: left;
+}
+
+.side {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+
+  app-wiki-page-card {
+    flex: 1;
+  }
+}
+
+.field-label {
+  font-size: 12px;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: var(--ink-soft);
+}
+
+.arrow {
+  flex-shrink: 0;
+  align-self: center;
+  margin-top: 20px;
+  color: var(--ink-soft);
+  font-size: 18px;
+}
+
+@media (max-width: 560px) {
+  :host(:not(.compact)) {
+    flex-direction: column;
+
+    .arrow {
+      margin-top: 0;
+      transform: rotate(90deg);
+    }
+  }
+}
+
+:host(.compact) {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  min-width: 0;
+
+  .arrow {
+    align-self: auto;
+    margin-top: 0;
+    font-size: 16px;
+  }
+}

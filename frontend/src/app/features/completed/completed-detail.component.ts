@@ -5,13 +5,13 @@ import { GameService } from '../../core/services/game.service';
 import { CompletedGameDetail } from '../../core/models/game.model';
 import { GamePathComponent } from '../../shared/game-path/game-path.component';
 import { DurationPipe, movesLabel } from '../../shared/duration/duration.pipe';
-import { WikiPageLinkComponent } from '../../shared/wiki-page-link/wiki-page-link.component';
+import { WikiRouteComponent } from '../../shared/wiki-route/wiki-route.component';
 import { withColdStartRetry } from '../../shared/http/cold-start-retry';
 import { AnimatedBackgroundComponent } from '../../shared/animated-background/animated-background.component';
 
 @Component({
   selector: 'app-completed-detail',
-  imports: [RouterLink, GamePathComponent, DurationPipe, WikiPageLinkComponent, AnimatedBackgroundComponent],
+  imports: [RouterLink, GamePathComponent, DurationPipe, WikiRouteComponent, AnimatedBackgroundComponent],
   changeDetection: ChangeDetectionStrategy.OnPush,
   styleUrl: 'completed-detail.component.scss',
   template: `
@@ -29,11 +29,7 @@ import { AnimatedBackgroundComponent } from '../../shared/animated-background/an
         } @else if (game(); as g) {
           <section class="summary-card">
             <p class="username">{{ g.username }}</p>
-            <p class="route-labels">
-              <app-wiki-page-link [title]="g.startPageTitle" [bold]="true" />
-              →
-              <app-wiki-page-link [title]="g.targetPageTitle" [bold]="true" />
-            </p>
+            <app-wiki-route class="route" [start]="g.startPageTitle" [target]="g.targetPageTitle" />
             <p class="muted">
               {{ movesLabel(g.moves) }} · {{ g.totalTimeSeconds | duration }}
               · {{ g.isRandomChallenge ? 'Sfida casuale' : 'Sfida personalizzata' }}

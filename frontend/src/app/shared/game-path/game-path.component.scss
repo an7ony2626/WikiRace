@@ -33,6 +33,21 @@
   border-radius: 999px;
   padding: 6px 14px;
   font-size: 14px;
+
+  // Same blue/red as the start and target dots of the route bar and logo.
+  &.start {
+    background: rgba(51, 102, 204, 0.1);
+    border-color: var(--wiki-blue);
+    color: var(--wiki-blue-dark);
+    font-weight: 600;
+  }
+
+  &.target {
+    background: var(--route-red-soft);
+    border-color: var(--route-red);
+    color: var(--route-red);
+    font-weight: 600;
+  }
 }
 
 .arrow {

@@ -113,6 +113,10 @@ h1 {
   font-size: 26px;
 }
 
+.current-route {
+  margin: 40px 0 20px;
+}
+
 .route-labels {
   margin: 12px 0 4px;
   font-size: 16px;
@@ -261,7 +265,7 @@ h1 {
 
 .page-picker {
   display: flex;
-  align-items: flex-start;
+  align-items: stretch;
   gap: 16px;
   margin: 40px 0 20px;
   text-align: left;
@@ -274,9 +278,21 @@ h1 {
 
 .picker-arrow {
   flex-shrink: 0;
-  margin-top: 34px;
+  align-self: center;
+  margin-top: 20px;
   color: var(--ink-soft);
   font-size: 18px;
+}
+
+@media (max-width: 560px) {
+  .page-picker {
+    flex-direction: column;
+  }
+
+  .picker-arrow {
+    margin-top: 0;
+    transform: rotate(90deg);
+  }
 }
 
 .filter-bar {

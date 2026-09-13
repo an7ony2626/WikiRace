@@ -44,16 +44,16 @@
   border-radius: var(--radius);
   box-shadow: var(--shadow-card);
   padding: 28px 32px;
+  text-align: center;
 }
 
 .username {
   font-weight: 600;
-  margin: 0 0 8px;
+  margin: 0 0 20px;
 }
 
-.route-labels {
-  font-size: 18px;
-  margin: 0 0 8px;
+.route {
+  margin: 0 0 20px;
 }
 
 .muted {

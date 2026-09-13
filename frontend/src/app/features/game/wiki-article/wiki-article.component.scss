@@ -15,3 +15,29 @@
   // loads — mediawiki.skinning sets the real font-family once it does.
   font-family: sans-serif;
 }
+.wiki-article mark.search-hit {
+  background: #fde68a;
+  color: inherit;
+  border-radius: 2px;
+  box-shadow: 0 0 0 1px #fde68a;
+
+  &.active {
+    background: #f59e0b;
+    box-shadow: 0 0 0 2px #f59e0b;
+  }
+}
+
+// Wikipedia's desktop skin floats infoboxes to the right, which on a
+// phone squeezes the article text into a sliver beside them.
+@media (max-width: 640px) {
+  .wiki-article {
+    padding-inline: 16px;
+
+    .sinottico,
+    .infobox {
+      float: none;
+      width: 100% !important;
+      margin: 0 0 1em;
+    }
+  }
+}

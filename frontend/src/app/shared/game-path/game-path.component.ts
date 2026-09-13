@@ -12,9 +12,9 @@ import { GameStep } from '../../core/models/game.model';
     <section class="path-card">
       <h2>Percorso seguito</h2>
       <ol class="path-chain">
-        @for (step of path(); track step.stepNumber; let last = $last) {
+        @for (step of path(); track step.stepNumber; let first = $first, last = $last) {
           <li>
-            <span class="page-title">{{ step.pageTitle }}</span>
+            <span class="page-title" [class.start]="first" [class.target]="last && !first">{{ step.pageTitle }}</span>
             @if (!last) {
               <span class="arrow" aria-hidden="true">→</span>
             }

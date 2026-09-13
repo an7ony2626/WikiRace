@@ -19,6 +19,7 @@ import { AnimatedBackgroundComponent } from '../../shared/animated-background/an
 import { ConfirmDialogComponent } from '../../shared/confirm-dialog/confirm-dialog.component';
 import { movesLabel } from '../../shared/duration/duration.pipe';
 import { withColdStartRetry } from '../../shared/http/cold-start-retry';
+import { WikiRouteComponent } from '../../shared/wiki-route/wiki-route.component';
 
 // Both the leaderboard and completed-games panels on the home page show
 // a short preview; the full lists live on their own "vedi tutte" pages.
@@ -26,7 +27,7 @@ const HOME_PREVIEW_SIZE = 5;
 
 @Component({
   selector: 'app-home',
-  imports: [RouterLink, PageSearchComponent, AnimatedBackgroundComponent, ConfirmDialogComponent],
+  imports: [RouterLink, PageSearchComponent, AnimatedBackgroundComponent, ConfirmDialogComponent, WikiRouteComponent],
   changeDetection: ChangeDetectionStrategy.OnPush,
   styleUrl: 'home.component.scss',
   template: `
@@ -72,11 +73,11 @@ const HOME_PREVIEW_SIZE = 5;
               <button type="button" class="cta" (click)="loadCurrentGame()">Riprova</button>
             } @else if (currentGame()) {
               <h1>Sfida in corso</h1>
-              <p class="route-labels">
-                <strong>{{ currentGame()!.startPageTitle }}</strong>
-                →
-                <strong>{{ currentGame()!.targetPageTitle }}</strong>
-              </p>
+              <app-wiki-route
+                class="current-route"
+                [start]="currentGame()!.startPageTitle"
+                [target]="currentGame()!.targetPageTitle"
+              />
               <p class="muted">{{ movesLabel(currentGame()!.moves) }} finora</p>
               <button type="button" class="cta" (click)="resumeGame()">Riprendi la sfida</button>
             } @else {

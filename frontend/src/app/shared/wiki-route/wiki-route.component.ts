@@ -71,7 +71,7 @@ export class WikiPageTileComponent {
 
 // The page in its own card: used both while picking the pages of a new
 // game and wherever a game's route is shown afterwards, so the two look
-// the same. Projected content (e.g. a "Cambia" button) goes under the page.
+// the same. Projected content (e.g. a search bar) goes under the page.
 @Component({
   selector: 'app-wiki-page-card',
   imports: [WikiPageTileComponent],

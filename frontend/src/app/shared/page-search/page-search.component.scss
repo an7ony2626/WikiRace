@@ -21,6 +21,7 @@
 .search-input {
   flex: 1;
   min-width: 0;
+  height: 40px;
   padding: 10px 12px;
   border: 1px solid var(--line);
   border-radius: var(--radius);
@@ -37,6 +38,9 @@
 
 .random-button {
   flex-shrink: 0;
+  // Fixed height so the button looks the same beside the search bar
+  // and on its own in the corner of a picked page.
+  height: 40px;
   padding: 0 14px;
   border: 1px solid var(--ink-soft);
   border-radius: var(--radius);
@@ -157,22 +161,31 @@
 
 .selected-page {
   flex: 1;
+  position: relative;
+
+  // Same button, same top-right corner it had before a page was picked.
+  .random-button {
+    position: absolute;
+    top: 12px;
+    right: 12px;
+  }
 }
 
-.change-button {
-  flex-shrink: 0;
-  padding: 6px 12px;
-  border: 1px solid var(--line);
-  border-radius: var(--radius);
-  background: var(--paper);
-  color: var(--wiki-blue);
-  font-family: var(--font-body);
-  font-size: 13px;
-  font-weight: 600;
-  cursor: pointer;
+.search-under-page {
+  width: 100%;
+  text-align: left;
 
-  &:hover {
-    border-color: var(--wiki-blue);
-    background: var(--paper-raised);
+  .search-input {
+    width: 100%;
+  }
+}
+
+// Too narrow for the button to sit beside the thumbnail: put it on its
+// own line above the page instead of on top of the image.
+@media (max-width: 480px) {
+  .selected-page .random-button {
+    position: static;
+    order: -1;
+    align-self: flex-end;
   }
 }

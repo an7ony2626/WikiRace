@@ -1,67 +1,86 @@
 import { ChangeDetectionStrategy, Component, inject, input, output, signal } from '@angular/core';
+import { NgTemplateOutlet } from '@angular/common';
 import { FormControl, ReactiveFormsModule } from '@angular/forms';
 import { toSignal } from '@angular/core/rxjs-interop';
-import { debounceTime, distinctUntilChanged, of, switchMap, tap } from 'rxjs';
+import { distinctUntilChanged, map, of, switchMap, tap, timer } from 'rxjs';
 import { WikiService } from '../../core/services/wiki.service';
 import { WikiSearchResult } from '../../core/models/wiki-search.model';
 import { WikiPageCardComponent } from '../wiki-route/wiki-route.component';
 
 @Component({
   selector: 'app-page-search',
-  imports: [ReactiveFormsModule, WikiPageCardComponent],
+  imports: [NgTemplateOutlet, ReactiveFormsModule, WikiPageCardComponent],
   changeDetection: ChangeDetectionStrategy.OnPush,
   styleUrl: './page-search.component.scss',
   template: `
     <div class="page-search">
       <label class="field-label">{{ label() }}</label>
 
+      <!-- Once a page is picked it can be swapped straight from its card:
+           Random stays in the top-right corner and the search bar moves
+           under the page, so there is no "Cambia" step in between. -->
       @if (selected(); as page) {
         <app-wiki-page-card class="selected-page" [title]="page.title" [thumbnail]="page.thumbnailUrl">
-          <button type="button" class="change-button" (click)="clear()">Cambia</button>
+          <ng-container [ngTemplateOutlet]="randomButton" />
+          <div class="search-under-page">
+            <ng-container [ngTemplateOutlet]="searchInput" />
+            <ng-container [ngTemplateOutlet]="dropdown" />
+          </div>
         </app-wiki-page-card>
       } @else {
         <div class="search-row">
-          <input
-            type="text"
-            class="search-input"
-            [formControl]="queryControl"
-            placeholder="Cerca una pagina Wikipedia…"
-            autocomplete="off"
-          />
-          <button type="button" class="random-button" [disabled]="isRandomLoading()" (click)="pickRandom()">
-            {{ isRandomLoading() ? '…' : '🎲 Random' }}
-          </button>
+          <ng-container [ngTemplateOutlet]="searchInput" />
+          <ng-container [ngTemplateOutlet]="randomButton" />
         </div>
-
-        <!-- position: relative anchor so the dropdown below can float
-             without pushing the rest of the page down (see scss) -->
-        <div class="results-anchor">
-          @if (isSearching()) {
-            <p class="dropdown-message">Ricerca in corso…</p>
-          } @else if (results().length > 0) {
-            <ul class="results">
-              @for (result of results(); track result.title) {
-                <li>
-                  <button type="button" class="result-row" (click)="select(result)">
-                    <span class="thumb" [class.placeholder]="!result.thumbnailUrl">
-                      @if (result.thumbnailUrl) {
-                        <img [src]="result.thumbnailUrl" [alt]="result.title" />
-                      }
-                    </span>
-                    <span class="result-text">
-                      <span class="result-title">{{ result.title }}</span>
-                      @if (result.extract) {
-                        <span class="result-extract">{{ result.extract }}</span>
-                      }
-                    </span>
-                  </button>
-                </li>
-              }
-            </ul>
-          }
-        </div>
+        <ng-container [ngTemplateOutlet]="dropdown" />
       }
     </div>
+
+    <ng-template #searchInput>
+      <input
+        type="text"
+        class="search-input"
+        [formControl]="queryControl"
+        placeholder="Cerca una pagina Wikipedia…"
+        autocomplete="off"
+      />
+    </ng-template>
+
+    <ng-template #randomButton>
+      <button type="button" class="random-button" [disabled]="isRandomLoading()" (click)="pickRandom()">
+        {{ isRandomLoading() ? '…' : '🎲 Random' }}
+      </button>
+    </ng-template>
+
+    <!-- position: relative anchor so the dropdown below can float
+         without pushing the rest of the page down (see scss) -->
+    <ng-template #dropdown>
+      <div class="results-anchor">
+        @if (isSearching()) {
+          <p class="dropdown-message">Ricerca in corso…</p>
+        } @else if (results().length > 0) {
+          <ul class="results">
+            @for (result of results(); track result.title) {
+              <li>
+                <button type="button" class="result-row" (click)="select(result)">
+                  <span class="thumb" [class.placeholder]="!result.thumbnailUrl">
+                    @if (result.thumbnailUrl) {
+                      <img [src]="result.thumbnailUrl" [alt]="result.title" />
+                    }
+                  </span>
+                  <span class="result-text">
+                    <span class="result-title">{{ result.title }}</span>
+                    @if (result.extract) {
+                      <span class="result-extract">{{ result.extract }}</span>
+                    }
+                  </span>
+                </button>
+              </li>
+            }
+          </ul>
+        }
+      </div>
+    </ng-template>
   `,
 })
 export class PageSearchComponent {
@@ -78,24 +97,31 @@ export class PageSearchComponent {
   readonly isSearching = signal(false);
   readonly isRandomLoading = signal(false);
 
+  // The debounce lives inside switchMap so that clearing the query (which
+  // select() does, while the search bar stays on screen) empties the
+  // dropdown at once and cancels any search still waiting or in flight.
   readonly results = toSignal(
     this.queryControl.valueChanges.pipe(
-      tap(() => this.isSearching.set(true)),
-      debounceTime(300),
+      map((query) => query.trim()),
       distinctUntilChanged(),
       switchMap((query) => {
-        const trimmed = query.trim();
-        if (trimmed.length < 2) return of<WikiSearchResult[]>([]);
-        return this.wikiService.search(trimmed);
+        if (query.length < 2) {
+          this.isSearching.set(false);
+          return of<WikiSearchResult[]>([]);
+        }
+        this.isSearching.set(true);
+        return timer(300).pipe(
+          switchMap(() => this.wikiService.search(query)),
+          tap(() => this.isSearching.set(false)),
+        );
       }),
-      tap(() => this.isSearching.set(false)),
     ),
     { initialValue: [] as WikiSearchResult[] },
   );
 
   select(result: WikiSearchResult, wasRandom = false): void {
     this.selected.set(result);
-    this.queryControl.setValue('', { emitEvent: false });
+    this.queryControl.setValue('');
     this.pageSelected.emit({ page: result, wasRandom });
   }
 
@@ -110,10 +136,5 @@ export class PageSearchComponent {
       },
       error: () => this.isRandomLoading.set(false),
     });
-  }
-
-  clear(): void {
-    this.selected.set(null);
-    this.pageSelected.emit(null);
   }
 }

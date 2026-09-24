@@ -1,3 +1,5 @@
+@use '../skeleton/skeleton';
+
 .page-search {
   height: 100%;
   display: flex;
@@ -67,24 +69,12 @@
   position: relative;
 }
 
-.dropdown-message,
 .results {
   position: absolute;
   top: 4px;
   left: 0;
   right: 0;
   z-index: 20;
-}
-
-.dropdown-message {
-  margin: 0;
-  padding: 10px 12px;
-  border: 1px solid var(--line);
-  border-radius: var(--radius);
-  background: var(--paper-raised);
-  box-shadow: var(--shadow-card);
-  font-size: 12px;
-  color: var(--ink-soft);
 }
 
 .results {
@@ -136,6 +126,11 @@
     content: '?';
     color: var(--ink-soft);
     font-size: 14px;
+  }
+
+  // Loading ghost of a result's thumbnail.
+  &.ghost {
+    @include skeleton.shimmer;
   }
 }
 

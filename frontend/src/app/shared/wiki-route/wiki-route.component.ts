@@ -5,44 +5,56 @@ import { fetchWikiThumbnail } from '../wiki-link/wiki-thumbnail';
 export type WikiRouteSize = 'large' | 'compact';
 
 // One side of the route: thumbnail + title, the whole block being a link
-// to the Wikipedia article.
+// to the Wikipedia article. A null title draws the tile's loading ghost.
 @Component({
   selector: 'app-wiki-page-tile',
   changeDetection: ChangeDetectionStrategy.OnPush,
   styleUrl: 'wiki-page-tile.component.scss',
   host: { '[class.compact]': "size() === 'compact'" },
   template: `
-    <a
-      class="tile"
-      [href]="wikiUrl(title())"
-      target="_blank"
-      rel="noopener noreferrer"
-      [attr.aria-label]="title() + ' — apri su Wikipedia in una nuova scheda'"
-      [title]="'Apri «' + title() + '» su Wikipedia'"
-    >
-      <span class="thumb" aria-hidden="true">
-        @if (thumbnailUrl(); as src) {
-          <img [src]="src" alt="" (error)="failedSrc.set(src)" />
-        } @else {
-          <span class="initial">{{ initial() }}</span>
-        }
-      </span>
-      <span class="text">
-        <span class="name">{{ title() }}</span>
-        <span class="hint" aria-hidden="true">
-          @if (size() === 'large') {
-            Apri su Wikipedia
+    @if (title(); as pageTitle) {
+      <a
+        class="tile"
+        [href]="wikiUrl(pageTitle)"
+        target="_blank"
+        rel="noopener noreferrer"
+        [attr.aria-label]="pageTitle + ' — apri su Wikipedia in una nuova scheda'"
+        [title]="'Apri «' + pageTitle + '» su Wikipedia'"
+      >
+        <span class="thumb" aria-hidden="true">
+          @if (thumbnailUrl(); as src) {
+            <img [src]="src" alt="" (error)="failedSrc.set(src)" />
+          } @else {
+            <span class="initial">{{ initial() }}</span>
           }
-          <svg viewBox="0 0 16 16" width="12" height="12">
-            <path d="M6 3h7v7M13 3 4 12" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" />
-          </svg>
+        </span>
+        <span class="text">
+          <span class="name">{{ pageTitle }}</span>
+          <span class="hint" aria-hidden="true">
+            @if (size() === 'large') {
+              Apri su Wikipedia
+            }
+            <svg viewBox="0 0 16 16" width="12" height="12">
+              <path d="M6 3h7v7M13 3 4 12" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" />
+            </svg>
+          </span>
+        </span>
+      </a>
+    } @else {
+      <span class="tile ghost" aria-hidden="true">
+        <span class="thumb"></span>
+        <span class="text">
+          <span class="name"><span class="skeleton-bone" style="--w: 7em"></span></span>
+          @if (size() === 'large') {
+            <span class="hint"><span class="skeleton-bone" style="--w: 9em"></span></span>
+          }
         </span>
       </span>
-    </a>
+    }
   `,
 })
 export class WikiPageTileComponent {
-  readonly title = input.required<string>();
+  readonly title = input.required<string | null>();
   readonly size = input<WikiRouteSize>('large');
   // Pass it when the caller already has it (e.g. a search result) to skip
   // the lookup; null means "known to have no image". Left undefined, the
@@ -56,7 +68,7 @@ export class WikiPageTileComponent {
 
   private readonly fetched = resource({
     // undefined params keep the resource idle: nothing to fetch.
-    params: () => (this.thumbnail() === undefined ? this.title() : undefined),
+    params: () => (this.thumbnail() === undefined ? (this.title() ?? undefined) : undefined),
     loader: ({ params }) => fetchWikiThumbnail(params),
   });
 
@@ -66,12 +78,13 @@ export class WikiPageTileComponent {
     return src === this.failedSrc() ? null : src;
   });
 
-  protected readonly initial = computed(() => this.title().trim().charAt(0).toUpperCase());
+  protected readonly initial = computed(() => (this.title() ?? '').trim().charAt(0).toUpperCase());
 }
 
 // The page in its own card: used both while picking the pages of a new
 // game and wherever a game's route is shown afterwards, so the two look
 // the same. Projected content (e.g. a search bar) goes under the page.
+// A null title draws the card's loading ghost.
 @Component({
   selector: 'app-wiki-page-card',
   imports: [WikiPageTileComponent],
@@ -83,10 +96,12 @@ export class WikiPageTileComponent {
   `,
 })
 export class WikiPageCardComponent {
-  readonly title = input.required<string>();
+  readonly title = input.required<string | null>();
   readonly thumbnail = input<string | null | undefined>(undefined);
 }
 
+// Null titles draw the route's loading ghost, the same size as the route
+// it stands in for.
 @Component({
   selector: 'app-wiki-route',
   imports: [WikiPageTileComponent, WikiPageCardComponent],
@@ -112,7 +127,7 @@ export class WikiPageCardComponent {
   `,
 })
 export class WikiRouteComponent {
-  readonly start = input.required<string>();
-  readonly target = input.required<string>();
+  readonly start = input.required<string | null>();
+  readonly target = input.required<string | null>();
   readonly size = input<WikiRouteSize>('large');
 }

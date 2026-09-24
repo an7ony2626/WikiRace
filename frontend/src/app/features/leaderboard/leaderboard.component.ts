@@ -1,4 +1,4 @@
-import { ChangeDetectionStrategy, Component, OnInit, inject, signal } from '@angular/core';
+import { ChangeDetectionStrategy, Component, OnInit, computed, inject, signal } from '@angular/core';
 import { RouterLink } from '@angular/router';
 import { AuthService } from '../../core/services/auth.service';
 import { GameService } from '../../core/services/game.service';
@@ -6,6 +6,7 @@ import { GAME_FILTER_OPTIONS, GameFilterMode, LeaderboardEntry, LeaderboardSortM
 import { withRequestTimeout } from '../../shared/rxjs/with-request-timeout';
 import { movesLabel } from '../../shared/duration/duration.pipe';
 import { AnimatedBackgroundComponent } from '../../shared/animated-background/animated-background.component';
+import { skeletonRows } from '../../shared/skeleton/skeleton';
 
 const PAGE_SIZE = 10;
 
@@ -62,14 +63,16 @@ const PAGE_SIZE = 10;
           }
         </div>
 
-        @if (isLoading()) {
-          <p class="muted">Caricamento…</p>
-        } @else if (loadFailed()) {
+        @if (loadFailed()) {
           <p class="error">Impossibile caricare la classifica.</p>
-        } @else if (entries().length === 0) {
+        } @else if (!isLoading() && entries().length === 0) {
           <p class="muted">Nessuna partita completata ancora.</p>
         } @else {
+          @if (ghostRows().length > 0) {
+            <span class="visually-hidden">Caricamento classifica…</span>
+          }
           <ol class="leaderboard">
+            @if (!isLoading()) {
               @for (entry of entries(); track entry.userId; let i = $index) {
                 <li>
                   <span class="name">{{ entry.username }}</span>
@@ -84,12 +87,24 @@ const PAGE_SIZE = 10;
                   <span class="stat mono">{{ entry.bestMoves != null ? movesLabel(entry.bestMoves) : '—' }} (best)</span>
                 </li>
               }
-            </ol>
+            }
+            @for (row of ghostRows(); track row) {
+              <li class="skeleton-row" aria-hidden="true">
+                <span class="name"><span class="skeleton-bone" style="--w: 6.5em"></span></span>
+                <span class="stat">
+                  <span class="skeleton-bone" style="--w: 1.4em"></span>
+                  <span class="skeleton-bone" style="--w: 3.6em"></span>
+                </span>
+                <span class="stat mono">
+                  <span class="skeleton-bone" style="--w: 4.2em"></span>
+                  <span class="skeleton-bone" style="--w: 3.6em"></span>
+                </span>
+              </li>
+            }
+          </ol>
 
-          @if (hasMore()) {
-            <button type="button" class="load-more" [disabled]="isLoadingMore()" (click)="loadMore()">
-              {{ isLoadingMore() ? 'Caricamento…' : 'Carica altre ↓' }}
-            </button>
+          @if (hasMore() && ghostRows().length === 0) {
+            <button type="button" class="load-more" (click)="loadMore()">Carica altre ↓</button>
           }
         }
       </main>
@@ -111,6 +126,14 @@ export class LeaderboardComponent implements OnInit {
   readonly mode = signal<GameFilterMode>('ALL');
   readonly sort = signal<LeaderboardSortMode>('BEST_MOVES');
   readonly currentUserRank = signal<number | null>(null);
+
+  // A reload ghosts the rows shown now (at most one page, all it brings
+  // back) so switching filter keeps the list's height; "Carica altre"
+  // ghosts the page it is fetching below the rows already there.
+  readonly ghostRows = computed(() => {
+    if (this.isLoading()) return skeletonRows(Math.min(this.entries().length, PAGE_SIZE) || PAGE_SIZE);
+    return skeletonRows(this.isLoadingMore() ? PAGE_SIZE : 0);
+  });
 
   private page = 0;
 

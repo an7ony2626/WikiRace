@@ -1,4 +1,4 @@
-import { ChangeDetectionStrategy, Component, OnInit, inject, signal } from '@angular/core';
+import { ChangeDetectionStrategy, Component, OnInit, computed, inject, signal } from '@angular/core';
 import { Router, RouterLink } from '@angular/router';
 import { catchError, of } from 'rxjs';
 import { GameService } from '../../core/services/game.service';
@@ -7,6 +7,7 @@ import { DurationPipe, movesLabel } from '../../shared/duration/duration.pipe';
 import { WikiPageLinkComponent } from '../../shared/wiki-page-link/wiki-page-link.component';
 import { withColdStartRetry } from '../../shared/http/cold-start-retry';
 import { AnimatedBackgroundComponent } from '../../shared/animated-background/animated-background.component';
+import { skeletonRows } from '../../shared/skeleton/skeleton';
 
 const PAGE_SIZE = 10;
 
@@ -37,40 +38,62 @@ const PAGE_SIZE = 10;
           }
         </div>
 
-        @if (isLoading()) {
-          <p class="muted">{{ isWaking() ? 'Il server si sta risvegliando, un attimo…' : 'Caricamento…' }}</p>
-        } @else if (loadFailed()) {
+        @if (loadFailed()) {
           <p class="error">Impossibile caricare le partite concluse.</p>
-        } @else if (games().length === 0) {
+        } @else if (!isLoading() && games().length === 0) {
           <p class="muted">Nessuna partita conclusa ancora.</p>
         } @else {
+          @if (ghostRows().length > 0) {
+            <span class="visually-hidden">Caricamento partite concluse…</span>
+          }
+          @if (isLoading() && isWaking()) {
+            <p class="muted">Il server si sta risvegliando, un attimo…</p>
+          }
           <ul class="completed-list">
-            @for (game of games(); track game.gameId) {
-              <li>
-                <div
-                  class="completed-row"
-                  tabindex="0"
-                  role="link"
-                  (click)="openDetail(game.gameId)"
-                  (keydown.enter)="openDetail(game.gameId)"
-                >
-                  <span class="name">{{ game.username }}</span>
+            @if (!isLoading()) {
+              @for (game of games(); track game.gameId) {
+                <li>
+                  <div
+                    class="completed-row"
+                    tabindex="0"
+                    role="link"
+                    (click)="openDetail(game.gameId)"
+                    (keydown.enter)="openDetail(game.gameId)"
+                  >
+                    <span class="name">{{ game.username }}</span>
+                    <span class="route-labels">
+                      <app-wiki-page-link [title]="game.startPageTitle" [stopPropagation]="true" />
+                      →
+                      <app-wiki-page-link [title]="game.targetPageTitle" [stopPropagation]="true" />
+                    </span>
+                    <span class="stat mono">{{ movesLabel(game.moves) }}</span>
+                    <span class="stat mono">{{ game.totalTimeSeconds | duration }}</span>
+                  </div>
+                </li>
+              }
+            }
+            @for (row of ghostRows(); track row) {
+              <li aria-hidden="true">
+                <div class="completed-row skeleton-row">
+                  <span class="name"><span class="skeleton-bone" style="--w: 6.5em"></span></span>
                   <span class="route-labels">
-                    <app-wiki-page-link [title]="game.startPageTitle" [stopPropagation]="true" />
-                    →
-                    <app-wiki-page-link [title]="game.targetPageTitle" [stopPropagation]="true" />
+                    <span class="skeleton-bone" style="--w: 3.5em"></span>
+                    <span class="skeleton-bone" style="--w: 8em"></span>
+                    <span class="skeleton-bone" style="--w: 5em"></span>
+                    <span class="skeleton-bone" style="--w: 4.5em"></span>
                   </span>
-                  <span class="stat mono">{{ movesLabel(game.moves) }}</span>
-                  <span class="stat mono">{{ game.totalTimeSeconds | duration }}</span>
+                  <span class="stat mono">
+                    <span class="skeleton-bone" style="--w: 1.2em"></span>
+                    <span class="skeleton-bone" style="--w: 3em"></span>
+                  </span>
+                  <span class="stat mono"><span class="skeleton-bone" style="--w: 3em"></span></span>
                 </div>
               </li>
             }
           </ul>
 
-          @if (hasMore()) {
-            <button type="button" class="load-more" [disabled]="isLoadingMore()" (click)="loadMore()">
-              {{ isLoadingMore() ? 'Caricamento…' : 'Carica altre ↓' }}
-            </button>
+          @if (hasMore() && ghostRows().length === 0) {
+            <button type="button" class="load-more" (click)="loadMore()">Carica altre ↓</button>
           }
         }
       </main>
@@ -91,6 +114,14 @@ export class CompletedListComponent implements OnInit {
   readonly games = signal<CompletedGameSummary[]>([]);
   readonly hasMore = signal(false);
   readonly mode = signal<GameFilterMode>('ALL');
+
+  // A reload ghosts the rows shown now (at most one page, all it brings
+  // back) so switching filter keeps the list's height; "Carica altre"
+  // ghosts the page it is fetching below the rows already there.
+  readonly ghostRows = computed(() => {
+    if (this.isLoading()) return skeletonRows(Math.min(this.games().length, PAGE_SIZE) || PAGE_SIZE);
+    return skeletonRows(this.isLoadingMore() ? PAGE_SIZE : 0);
+  });
 
   private page = 0;
 

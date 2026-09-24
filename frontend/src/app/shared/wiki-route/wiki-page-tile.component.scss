@@ -1,3 +1,5 @@
+@use '../skeleton/skeleton';
+
 :host {
   --ring: var(--line);
   display: block;
@@ -37,6 +39,16 @@
     width: 100%;
     height: 100%;
     object-fit: cover;
+  }
+}
+
+// Loading ghost (null title): same layout with the thumbnail filled by
+// the shimmer, and nothing to hover.
+.tile.ghost {
+  pointer-events: none;
+
+  .thumb {
+    @include skeleton.shimmer;
   }
 }
 

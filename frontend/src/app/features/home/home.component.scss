@@ -1,3 +1,5 @@
+@use '../../shared/skeleton/skeleton';
+
 .page {
   min-height: 100vh;
 }
@@ -282,6 +284,55 @@ h1 {
   margin-top: 20px;
   color: var(--ink-soft);
   font-size: 18px;
+}
+
+// Loading ghost of one page-search (see page-search.component.scss): its
+// label above a 40px search bar and Random button. The padding stands for
+// the gap before the real one's (empty) dropdown anchor.
+.picker-ghost {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding-bottom: 8px;
+  font-size: 12px;
+}
+
+.picker-ghost-row {
+  display: flex;
+  gap: 8px;
+}
+
+.input-ghost {
+  flex: 1;
+  min-width: 0;
+  height: 40px;
+  padding: 10px 12px;
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  background: var(--paper-raised);
+  font-size: 14px;
+}
+
+.button-ghost {
+  flex-shrink: 0;
+  width: 104px;
+  height: 40px;
+  border-radius: var(--radius);
+}
+
+// Same box as the real button: its label is only there, invisible, to
+// give it the button's size.
+.cta.ghost {
+  display: inline-block;
+  color: transparent;
+  pointer-events: none;
+}
+
+.button-ghost,
+.cta.ghost {
+  @include skeleton.shimmer;
 }
 
 @media (max-width: 560px) {

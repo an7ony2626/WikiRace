@@ -1,0 +1,65 @@
+// Ghost ("skeleton") loading placeholders. While something loads, a view
+// draws its real layout with grey bones where the data will go, instead of
+// a one-line "Caricamento…" that collapses the page and makes it jump back
+// once the data lands.
+//
+// The shimmer is painted against the viewport (background-attachment:
+// fixed), so every bone on screen shows its slice of one highlight sweeping
+// left to right, whichever component it lives in. The keyframes are emitted
+// once in styles.scss: Angular only renames keyframes a component defines
+// itself, so component stylesheets can use these mixins as they are.
+
+$base: var(--line);
+$highlight: color-mix(in srgb, var(--line) 40%, var(--paper-raised));
+
+@mixin keyframes {
+  @keyframes skeleton-shimmer {
+    from {
+      background-position: 100% 0;
+    }
+
+    to {
+      background-position: 0 0;
+    }
+  }
+}
+
+// Fills any box (a thumbnail, a card) with the moving ghost colour.
+@mixin shimmer {
+  @include -paint;
+  @include -still;
+}
+
+// A bar standing in for a run of text. It is exactly one line of the
+// surrounding text tall (the bar itself is drawn thinner, centred), so a
+// row of bones keeps the height of the row of text it replaces. --w sets
+// the length, in em for text or % inside a block.
+@mixin bone {
+  // First: its background shorthand would reset the clip set below.
+  @include -paint;
+  display: inline-block;
+  vertical-align: top;
+  box-sizing: border-box;
+  width: calc(var(--w, 100%) * var(--skeleton-vary, 1));
+  max-width: 100%;
+  height: 1lh;
+  padding-block: calc((1lh - 0.75em) / 2);
+  background-clip: content-box;
+  border-radius: 999px;
+  @include -still;
+}
+
+@mixin -paint {
+  background: $base linear-gradient(100deg, $base 45%, $highlight 50%, $base 55%) fixed;
+  // Three viewports wide, so the highlight starts and ends off-screen.
+  background-size: 300% 100%;
+  animation: skeleton-shimmer 1.8s ease-in-out infinite;
+}
+
+// The global reduced-motion rule only shortens animations, which would
+// make an infinite one flicker: stop it outright.
+@mixin -still {
+  @media (prefers-reduced-motion: reduce) {
+    animation: none;
+  }
+}

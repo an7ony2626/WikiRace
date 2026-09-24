@@ -1,4 +1,4 @@
-import { ChangeDetectionStrategy, Component, inject, input, output, signal } from '@angular/core';
+import { ChangeDetectionStrategy, Component, computed, inject, input, output, signal } from '@angular/core';
 import { NgTemplateOutlet } from '@angular/common';
 import { FormControl, ReactiveFormsModule } from '@angular/forms';
 import { toSignal } from '@angular/core/rxjs-interop';
@@ -6,6 +6,10 @@ import { distinctUntilChanged, map, of, switchMap, tap, timer } from 'rxjs';
 import { WikiService } from '../../core/services/wiki.service';
 import { WikiSearchResult } from '../../core/models/wiki-search.model';
 import { WikiPageCardComponent } from '../wiki-route/wiki-route.component';
+import { skeletonRows } from '../skeleton/skeleton';
+
+// The dropdown shows about this many results before it scrolls.
+const VISIBLE_RESULTS = 5;
 
 @Component({
   selector: 'app-page-search',
@@ -57,7 +61,20 @@ import { WikiPageCardComponent } from '../wiki-route/wiki-route.component';
     <ng-template #dropdown>
       <div class="results-anchor">
         @if (isSearching()) {
-          <p class="dropdown-message">Ricerca in corso…</p>
+          <span class="visually-hidden">Ricerca in corso…</span>
+          <ul class="results" aria-hidden="true">
+            @for (row of ghostResults(); track row) {
+              <li>
+                <div class="result-row skeleton-row">
+                  <span class="thumb ghost"></span>
+                  <span class="result-text">
+                    <span class="result-title"><span class="skeleton-bone" style="--w: 9em"></span></span>
+                    <span class="result-extract"><span class="skeleton-bone" style="--w: 26em"></span></span>
+                  </span>
+                </div>
+              </li>
+            }
+          </ul>
         } @else if (results().length > 0) {
           <ul class="results">
             @for (result of results(); track result.title) {
@@ -117,6 +134,12 @@ export class PageSearchComponent {
       }),
     ),
     { initialValue: [] as WikiSearchResult[] },
+  );
+
+  // While a search runs, ghost the results already listed (refining a
+  // query keeps the dropdown's size) or a full dropdown for a first search.
+  readonly ghostResults = computed(() =>
+    skeletonRows(Math.min(this.results().length || VISIBLE_RESULTS, VISIBLE_RESULTS)),
   );
 
   select(result: WikiSearchResult, wasRandom = false): void {

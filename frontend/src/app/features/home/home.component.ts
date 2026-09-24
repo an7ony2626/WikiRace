@@ -19,6 +19,7 @@ import { AnimatedBackgroundComponent } from '../../shared/animated-background/an
 import { ConfirmDialogComponent } from '../../shared/confirm-dialog/confirm-dialog.component';
 import { movesLabel } from '../../shared/duration/duration.pipe';
 import { withColdStartRetry } from '../../shared/http/cold-start-retry';
+import { skeletonRows } from '../../shared/skeleton/skeleton';
 import { WikiRouteComponent } from '../../shared/wiki-route/wiki-route.component';
 
 // Both the leaderboard and completed-games panels on the home page show
@@ -67,7 +68,40 @@ const HOME_PREVIEW_SIZE = 5;
             </svg>
 
             @if (isLoadingCurrent()) {
-              <p class="muted">{{ isWakingCurrent() ? 'Il server si sta risvegliando, un attimo…' : 'Verifica partita in corso…' }}</p>
+              <span class="visually-hidden">Verifica partita in corso…</span>
+              @if (isWakingCurrent()) {
+                <p class="muted">Il server si sta risvegliando, un attimo…</p>
+              }
+              <!-- Ghost of the new-game picker, where most visits land -->
+              <div aria-hidden="true">
+                <h1><span class="skeleton-bone" style="--w: 10em"></span></h1>
+                <p class="muted">
+                  <span class="skeleton-bone" style="--w: 7.5em"></span>
+                  <span class="skeleton-bone" style="--w: 10em"></span>
+                  <span class="skeleton-bone" style="--w: 7em"></span>
+                  <span class="skeleton-bone" style="--w: 9em"></span>
+                  <span class="skeleton-bone" style="--w: 8em"></span>
+                  <span class="skeleton-bone" style="--w: 9em"></span>
+                </p>
+                <div class="page-picker">
+                  <div class="picker-ghost">
+                    <span class="skeleton-bone" style="--w: 11em"></span>
+                    <div class="picker-ghost-row">
+                      <span class="input-ghost"><span class="skeleton-bone" style="--w: 14em"></span></span>
+                      <span class="button-ghost"></span>
+                    </div>
+                  </div>
+                  <span class="picker-arrow">→</span>
+                  <div class="picker-ghost">
+                    <span class="skeleton-bone" style="--w: 11em"></span>
+                    <div class="picker-ghost-row">
+                      <span class="input-ghost"><span class="skeleton-bone" style="--w: 14em"></span></span>
+                      <span class="button-ghost"></span>
+                    </div>
+                  </div>
+                </div>
+                <span class="cta ghost">Inizia una nuova sfida</span>
+              </div>
             } @else if (currentLoadFailed()) {
               <p class="error">Impossibile verificare la partita in corso.</p>
               <button type="button" class="cta" (click)="loadCurrentGame()">Riprova</button>
@@ -150,7 +184,25 @@ const HOME_PREVIEW_SIZE = 5;
             }
           </div>
           @if (isLoadingLeaderboard()) {
-            <p class="muted">{{ isWakingLeaderboard() ? 'Il server si sta risvegliando, un attimo…' : 'Caricamento…' }}</p>
+            <span class="visually-hidden">Caricamento classifica…</span>
+            @if (isWakingLeaderboard()) {
+              <p class="muted">Il server si sta risvegliando, un attimo…</p>
+            }
+            <ol class="leaderboard" aria-hidden="true">
+              @for (row of leaderboardSkeleton(); track row) {
+                <li class="skeleton-row">
+                  <span class="name"><span class="skeleton-bone" style="--w: 6.5em"></span></span>
+                  <span class="stat">
+                    <span class="skeleton-bone" style="--w: 1.4em"></span>
+                    <span class="skeleton-bone" style="--w: 3.6em"></span>
+                  </span>
+                  <span class="stat mono">
+                    <span class="skeleton-bone" style="--w: 4.2em"></span>
+                    <span class="skeleton-bone" style="--w: 3.6em"></span>
+                  </span>
+                </li>
+              }
+            </ol>
           } @else if (leaderboardLoadFailed()) {
             <p class="error">Impossibile caricare la classifica.</p>
           } @else if (leaderboard().length === 0) {
@@ -194,7 +246,29 @@ const HOME_PREVIEW_SIZE = 5;
             }
           </div>
           @if (isLoadingCompleted()) {
-            <p class="muted">{{ isWakingCompleted() ? 'Il server si sta risvegliando, un attimo…' : 'Caricamento…' }}</p>
+            <span class="visually-hidden">Caricamento partite concluse…</span>
+            @if (isWakingCompleted()) {
+              <p class="muted">Il server si sta risvegliando, un attimo…</p>
+            }
+            <ul class="completed-list" aria-hidden="true">
+              @for (row of completedSkeleton(); track row) {
+                <li>
+                  <div class="completed-row skeleton-row">
+                    <span class="name"><span class="skeleton-bone" style="--w: 6.5em"></span></span>
+                    <span class="route-labels small">
+                      <span class="skeleton-bone" style="--w: 3.5em"></span>
+                      <span class="skeleton-bone" style="--w: 8em"></span>
+                      <span class="skeleton-bone" style="--w: 5em"></span>
+                      <span class="skeleton-bone" style="--w: 4.5em"></span>
+                    </span>
+                    <span class="stat mono">
+                      <span class="skeleton-bone" style="--w: 1.2em"></span>
+                      <span class="skeleton-bone" style="--w: 3em"></span>
+                    </span>
+                  </div>
+                </li>
+              }
+            </ul>
           } @else if (completedLoadFailed()) {
             <p class="error">Impossibile caricare le partite concluse.</p>
           } @else if (recentCompleted().length === 0) {
@@ -264,6 +338,11 @@ export class HomeComponent implements OnInit {
   readonly leaderboardRank = signal<number | null>(null);
   readonly recentCompleted = signal<CompletedGameSummary[]>([]);
   readonly completedMode = signal<GameFilterMode>('ALL');
+
+  // A reloading panel ghosts as many rows as it shows now, so switching
+  // filter keeps its height; an empty panel ghosts a full preview.
+  readonly leaderboardSkeleton = computed(() => skeletonRows(this.leaderboard().length || HOME_PREVIEW_SIZE));
+  readonly completedSkeleton = computed(() => skeletonRows(this.recentCompleted().length || HOME_PREVIEW_SIZE));
 
   readonly startPageChoice = signal<WikiSearchResult | null>(null);
   readonly targetPageChoice = signal<WikiSearchResult | null>(null);

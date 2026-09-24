@@ -37,6 +37,8 @@ import { withRequestTimeout } from '../../shared/rxjs/with-request-timeout';
         <span class="route-labels">
           @if (game(); as g) {
             <app-wiki-route [start]="g.startPageTitle" [target]="g.targetPageTitle" size="compact" />
+          } @else if (isLoading()) {
+            <app-wiki-route [start]="null" [target]="null" size="compact" aria-hidden="true" />
           }
         </span>
 
@@ -91,7 +93,16 @@ import { withRequestTimeout } from '../../shared/rxjs/with-request-timeout';
       </header>
 
       @if (isLoading()) {
-        <p class="muted centered">Caricamento pagina…</p>
+        <span class="visually-hidden">Caricamento pagina…</span>
+        <div class="article-ghost" aria-hidden="true">
+          @for (paragraph of ghostParagraphs; track $index) {
+            <p>
+              @for (line of paragraph; track $index) {
+                <span class="skeleton-bone" [style.width.%]="line"></span>
+              }
+            </p>
+          }
+        </div>
       } @else if (loadFailed()) {
         <p class="error centered">Impossibile caricare la partita.</p>
         <button type="button" class="cta" (click)="loadGame()">Riprova</button>
@@ -151,6 +162,15 @@ export class GameComponent implements OnInit, OnDestroy {
 
   protected readonly movesLabel = movesLabel;
   protected readonly minSearchLength = MIN_SEARCH_LENGTH;
+  // Line widths (%) of the article's loading ghost, one array per paragraph.
+  protected readonly ghostParagraphs = [
+    [100, 97, 100, 62],
+    [100, 94, 100, 98, 100, 41],
+    [96, 100, 88],
+    [100, 99, 100, 93, 70],
+    [100, 96, 100, 100, 84],
+    [98, 100, 55],
+  ];
 
   ngOnInit(): void {
     this.loadGame();

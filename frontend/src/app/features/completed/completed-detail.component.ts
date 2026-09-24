@@ -23,7 +23,16 @@ import { AnimatedBackgroundComponent } from '../../shared/animated-background/an
 
       <main class="content">
         @if (isLoading()) {
-          <p class="muted">{{ isWaking() ? 'Il server si sta risvegliando, un attimo…' : 'Caricamento…' }}</p>
+          <span class="visually-hidden">Caricamento partita…</span>
+          @if (isWaking()) {
+            <p class="muted">Il server si sta risvegliando, un attimo…</p>
+          }
+          <section class="summary-card" aria-hidden="true">
+            <p class="username"><span class="skeleton-bone" style="--w: 7em"></span></p>
+            <app-wiki-route class="route" [start]="null" [target]="null" />
+            <p class="muted"><span class="skeleton-bone" style="--w: 18em"></span></p>
+          </section>
+          <app-game-path [path]="null" aria-hidden="true" />
         } @else if (loadFailed()) {
           <p class="error">Impossibile caricare questa partita.</p>
         } @else if (game(); as g) {

@@ -6,7 +6,8 @@ import { GAME_FILTER_OPTIONS, GameFilterMode, LeaderboardEntry, LeaderboardSortM
 import { withRequestTimeout } from '../../shared/rxjs/with-request-timeout';
 import { movesLabel } from '../../shared/duration/duration.pipe';
 import { AnimatedBackgroundComponent } from '../../shared/animated-background/animated-background.component';
-import { skeletonRows } from '../../shared/skeleton/skeleton';
+import { Subscription } from 'rxjs';
+import { skeletonRows, withSkeletonMinDuration } from '../../shared/skeleton/skeleton';
 
 const PAGE_SIZE = 10;
 
@@ -136,6 +137,7 @@ export class LeaderboardComponent implements OnInit {
   });
 
   private page = 0;
+  private request?: Subscription;
 
   ngOnInit(): void {
     this.loadPage(0, false);
@@ -159,12 +161,16 @@ export class LeaderboardComponent implements OnInit {
   }
 
   private loadPage(page: number, append: boolean): void {
-    (append ? this.isLoadingMore : this.isLoading).set(true);
+    this.isLoading.set(!append);
+    this.isLoadingMore.set(append);
     this.loadFailed.set(false);
 
-    this.gameService
+    // A newer filter wins: the answer for the one just left (or for a
+    // "Carica altre" of it) must not land after it.
+    this.request?.unsubscribe();
+    this.request = this.gameService
       .getLeaderboard(this.mode(), this.sort(), page, PAGE_SIZE)
-      .pipe(withRequestTimeout())
+      .pipe(withRequestTimeout(), withSkeletonMinDuration())
       .subscribe((result) => {
         this.isLoading.set(false);
         this.isLoadingMore.set(false);

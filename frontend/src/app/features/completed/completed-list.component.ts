@@ -1,13 +1,13 @@
 import { ChangeDetectionStrategy, Component, OnInit, computed, inject, signal } from '@angular/core';
 import { Router, RouterLink } from '@angular/router';
-import { catchError, of } from 'rxjs';
+import { Subscription, catchError, of } from 'rxjs';
 import { GameService } from '../../core/services/game.service';
 import { CompletedGameSummary, GAME_FILTER_OPTIONS, GameFilterMode } from '../../core/models/game.model';
 import { DurationPipe, movesLabel } from '../../shared/duration/duration.pipe';
 import { WikiPageLinkComponent } from '../../shared/wiki-page-link/wiki-page-link.component';
 import { withColdStartRetry } from '../../shared/http/cold-start-retry';
 import { AnimatedBackgroundComponent } from '../../shared/animated-background/animated-background.component';
-import { skeletonRows } from '../../shared/skeleton/skeleton';
+import { skeletonRows, withSkeletonMinDuration } from '../../shared/skeleton/skeleton';
 
 const PAGE_SIZE = 10;
 
@@ -124,6 +124,7 @@ export class CompletedListComponent implements OnInit {
   });
 
   private page = 0;
+  private request?: Subscription;
 
   ngOnInit(): void {
     this.loadPage(0, false);
@@ -145,14 +146,21 @@ export class CompletedListComponent implements OnInit {
   }
 
   private loadPage(page: number, append: boolean): void {
-    (append ? this.isLoadingMore : this.isLoading).set(true);
+    this.isLoading.set(!append);
+    this.isLoadingMore.set(append);
     this.loadFailed.set(false);
     this.isWaking.set(false);
 
-    withColdStartRetry(this.gameService.getCompletedGames(this.mode(), page, PAGE_SIZE), () =>
+    // A newer filter wins: the answer for the one just left (or for a
+    // "Carica altre" of it) must not land after it.
+    this.request?.unsubscribe();
+    this.request = withColdStartRetry(this.gameService.getCompletedGames(this.mode(), page, PAGE_SIZE), () =>
       this.isWaking.set(true),
     )
-      .pipe(catchError(() => of('error' as const)))
+      .pipe(
+        catchError(() => of('error' as const)),
+        withSkeletonMinDuration(),
+      )
       .subscribe((result) => {
         this.isLoading.set(false);
         this.isLoadingMore.set(false);

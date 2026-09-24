@@ -4,22 +4,27 @@
 // once the data lands.
 //
 // The shimmer is painted against the viewport (background-attachment:
-// fixed), so every bone on screen shows its slice of one highlight sweeping
-// left to right, whichever component it lives in. The keyframes are emitted
+// fixed), so every bone on screen shows its slice of the same stream of
+// highlights flowing left to right, whichever component it lives in. The keyframes are emitted
 // once in styles.scss: Angular only renames keyframes a component defines
 // itself, so component stylesheets can use these mixins as they are.
 
 $base: var(--line);
-$highlight: color-mix(in srgb, var(--line) 40%, var(--paper-raised));
+$highlight: color-mix(in srgb, var(--line) 20%, var(--paper-raised));
+// One highlight every $spacing, each travelling that far per $sweep.
+$spacing: 720px;
+$sweep: 1.4s;
 
 @mixin keyframes {
   @keyframes skeleton-shimmer {
-    from {
-      background-position: 100% 0;
-    }
-
     to {
-      background-position: 0 0;
+      background-position: $spacing 0;
+    }
+  }
+
+  @keyframes skeleton-pulse {
+    to {
+      opacity: 0.45;
     }
   }
 }
@@ -27,7 +32,7 @@ $highlight: color-mix(in srgb, var(--line) 40%, var(--paper-raised));
 // Fills any box (a thumbnail, a card) with the moving ghost colour.
 @mixin shimmer {
   @include -paint;
-  @include -still;
+  @include -reduced-motion;
 }
 
 // A bar standing in for a run of text. It is exactly one line of the
@@ -46,20 +51,27 @@ $highlight: color-mix(in srgb, var(--line) 40%, var(--paper-raised));
   padding-block: calc((1lh - 0.75em) / 2);
   background-clip: content-box;
   border-radius: 999px;
-  @include -still;
+  @include -reduced-motion;
 }
 
+// The gradient tile repeats across the screen and slides one tile to the
+// right per cycle: a steady stream of highlights, with one always passing
+// somewhere, so the ghost visibly moves from the moment it appears
+// however briefly it stays. Straight (90deg), so the tiles join
+// seamlessly.
 @mixin -paint {
-  background: $base linear-gradient(100deg, $base 45%, $highlight 50%, $base 55%) fixed;
-  // Three viewports wide, so the highlight starts and ends off-screen.
-  background-size: 300% 100%;
-  animation: skeleton-shimmer 1.8s ease-in-out infinite;
+  background: $base linear-gradient(90deg, $base 25%, $highlight 50%, $base 75%) fixed;
+  background-size: $spacing 100%;
+  animation: skeleton-shimmer $sweep linear infinite;
 }
 
-// The global reduced-motion rule only shortens animations, which would
-// make an infinite one flicker: stop it outright.
-@mixin -still {
+// No sweep across the screen with reduced motion: the ghost fades gently
+// in place instead, so it still reads as loading. The global rule shrinks
+// every animation to nothing (which would make this one flicker), hence
+// the duration set back with !important.
+@mixin -reduced-motion {
   @media (prefers-reduced-motion: reduce) {
-    animation: none;
+    animation: skeleton-pulse $sweep ease-in-out infinite alternate;
+    animation-duration: $sweep !important;
   }
 }

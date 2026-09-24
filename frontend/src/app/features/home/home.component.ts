@@ -1,7 +1,7 @@
 import { ChangeDetectionStrategy, Component, OnInit, computed, inject, signal } from '@angular/core';
 import { Router, RouterLink } from '@angular/router';
 import { HttpErrorResponse } from '@angular/common/http';
-import { catchError, of } from 'rxjs';
+import { Subscription, catchError, of } from 'rxjs';
 import { AuthService } from '../../core/services/auth.service';
 import { GameService } from '../../core/services/game.service';
 import {
@@ -19,7 +19,7 @@ import { AnimatedBackgroundComponent } from '../../shared/animated-background/an
 import { ConfirmDialogComponent } from '../../shared/confirm-dialog/confirm-dialog.component';
 import { movesLabel } from '../../shared/duration/duration.pipe';
 import { withColdStartRetry } from '../../shared/http/cold-start-retry';
-import { skeletonRows } from '../../shared/skeleton/skeleton';
+import { skeletonRows, withSkeletonMinDuration } from '../../shared/skeleton/skeleton';
 import { WikiRouteComponent } from '../../shared/wiki-route/wiki-route.component';
 
 // Both the leaderboard and completed-games panels on the home page show
@@ -354,6 +354,9 @@ export class HomeComponent implements OnInit {
 
   readonly progressX = signal(16);
 
+  private leaderboardRequest?: Subscription;
+  private completedRequest?: Subscription;
+
   ngOnInit(): void {
     // The session check started at bootstrap may still be in flight on a
     // fresh page load: wait for it, otherwise a logged-in player with a
@@ -375,7 +378,10 @@ export class HomeComponent implements OnInit {
     this.isWakingCurrent.set(false);
 
     withColdStartRetry(this.gameService.getCurrentGame(), () => this.isWakingCurrent.set(true))
-      .pipe(catchError(() => of('error' as const)))
+      .pipe(
+        catchError(() => of('error' as const)),
+        withSkeletonMinDuration(),
+      )
       .subscribe((result) => {
         this.isLoadingCurrent.set(false);
 
@@ -409,11 +415,17 @@ export class HomeComponent implements OnInit {
     this.leaderboardLoadFailed.set(false);
     this.isWakingLeaderboard.set(false);
 
-    withColdStartRetry(
+    // A newer filter wins: the answer for the one just left must not land
+    // after it.
+    this.leaderboardRequest?.unsubscribe();
+    this.leaderboardRequest = withColdStartRetry(
       this.gameService.getLeaderboard(this.leaderboardMode(), this.leaderboardSort(), 0, HOME_PREVIEW_SIZE),
       () => this.isWakingLeaderboard.set(true),
     )
-      .pipe(catchError(() => of('error' as const)))
+      .pipe(
+        catchError(() => of('error' as const)),
+        withSkeletonMinDuration(),
+      )
       .subscribe((result) => {
         this.isLoadingLeaderboard.set(false);
 
@@ -438,11 +450,15 @@ export class HomeComponent implements OnInit {
     this.completedLoadFailed.set(false);
     this.isWakingCompleted.set(false);
 
-    withColdStartRetry(
+    this.completedRequest?.unsubscribe();
+    this.completedRequest = withColdStartRetry(
       this.gameService.getCompletedGames(this.completedMode(), 0, HOME_PREVIEW_SIZE),
       () => this.isWakingCompleted.set(true),
     )
-      .pipe(catchError(() => of('error' as const)))
+      .pipe(
+        catchError(() => of('error' as const)),
+        withSkeletonMinDuration(),
+      )
       .subscribe((result) => {
         this.isLoadingCompleted.set(false);
 

@@ -8,6 +8,7 @@ import { DurationPipe, movesLabel } from '../../shared/duration/duration.pipe';
 import { WikiRouteComponent } from '../../shared/wiki-route/wiki-route.component';
 import { withColdStartRetry } from '../../shared/http/cold-start-retry';
 import { AnimatedBackgroundComponent } from '../../shared/animated-background/animated-background.component';
+import { withSkeletonMinDuration } from '../../shared/skeleton/skeleton';
 
 @Component({
   selector: 'app-completed-detail',
@@ -66,7 +67,10 @@ export class CompletedDetailComponent implements OnInit {
     const id = Number(this.route.snapshot.paramMap.get('id'));
 
     withColdStartRetry(this.gameService.getCompletedGameDetail(id), () => this.isWaking.set(true))
-      .pipe(catchError(() => of('error' as const)))
+      .pipe(
+        catchError(() => of('error' as const)),
+        withSkeletonMinDuration(),
+      )
       .subscribe((result) => {
         this.isLoading.set(false);
 

@@ -20,6 +20,7 @@ import { GamePathComponent } from '../../shared/game-path/game-path.component';
 import { WikiRouteComponent } from '../../shared/wiki-route/wiki-route.component';
 import { movesLabel } from '../../shared/duration/duration.pipe';
 import { withRequestTimeout } from '../../shared/rxjs/with-request-timeout';
+import { withSkeletonMinDuration } from '../../shared/skeleton/skeleton';
 
 @Component({
   selector: 'app-game',
@@ -183,7 +184,7 @@ export class GameComponent implements OnInit, OnDestroy {
 
     this.gameService
       .getGame(id)
-      .pipe(withRequestTimeout())
+      .pipe(withRequestTimeout(), withSkeletonMinDuration())
       .subscribe((result) => {
         this.isLoading.set(false);
 
